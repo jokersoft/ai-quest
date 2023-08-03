@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from ..schema.action import Action
+from app.schema.action import Action
 
 router = APIRouter()
 
