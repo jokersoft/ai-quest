@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment (venv or PyEnv)
+venv/
+.env
+.pyenv
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Pytest cache
+**/.pytest_cache/
+
+# SQLite database file (if used)
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
