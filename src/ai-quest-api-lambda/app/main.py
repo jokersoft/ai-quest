@@ -10,4 +10,5 @@ async def root():
 
 app.include_router(api_router, prefix="/api/v1")
 
+# for AWS Lambda compatibility:
 handler = Mangum(app)

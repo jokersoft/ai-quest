@@ -8,7 +8,8 @@ resource "aws_lambda_function" "api_lambda" {
 
   environment {
     variables = {
-      DEBUG = 1
+      CONFIG = data.aws_secretsmanager_secret_version.configs.secret_string
+      DEBUG  = 1
     }
   }
 
