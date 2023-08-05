@@ -2,10 +2,11 @@ from fastapi import APIRouter, HTTPException
 from app.schema.action import Action
 from app.config.openai import openai, configure_openai
 from app.config.mysql import configure_mysql
+from app.config.logger import configure_logger
 from app.services.situation_content_provider import SituationContentProvider
 from app.models.message import Message
 from sqlalchemy.orm import Session
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 
 router = APIRouter()
@@ -15,14 +16,17 @@ async def action(action: Action):
     configure_openai()
     content_provider = SituationContentProvider()
     engine = configure_mysql()
+    logger = configure_logger()
 
     # Record the message in the database
     decision_message = Message(
+        id=uuid4().bytes,
         user_id=uuid4().bytes,  # TODO: unMock
         role='user',
         content=action.input,
         type='decision'
     )
+    logger.info("decision_message recorded")
 
     # TODO: Evaluate
 
@@ -45,11 +49,13 @@ async def action(action: Action):
 
     # Record messages in the database
     situation_message = Message(
+        id=uuid4().bytes,
         user_id=uuid4().bytes,  # TODO: unMock
         role='user',
         content=response,
         type='situation' # TODO: unMock
     )
+    logger.info("situation_message recorded")
 
     # Create a new session
     with Session(engine) as session:

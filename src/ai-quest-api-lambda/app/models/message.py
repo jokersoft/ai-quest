@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, DateTime, Uuid
 from sqlalchemy.sql import func
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from uuid import uuid4
 
 Base = declarative_base()

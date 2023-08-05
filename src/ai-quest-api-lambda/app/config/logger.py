@@ -1,10 +1,16 @@
 import os
-import logger
+import sys
+import logging
 
-DEBUG = int(os.environ["DEBUG"])
-logger = logging.getLogger()
-if DEBUG == 1:
-    logger.setLevel(logging.DEBUG)
-    logger.debug("DEBUG mode enabled")
-else:
-    logger.setLevel(logging.INFO)
+
+def configure_logger():
+    DEBUG = int(os.environ["DEBUG"])
+    logging.basicConfig(stream=sys.stdout)
+    logger = logging.getLogger()
+    if DEBUG == 1:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("DEBUG mode enabled")
+    else:
+        logger.setLevel(logging.INFO)
+    return logger
+
