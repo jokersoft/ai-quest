@@ -8,10 +8,16 @@ router = APIRouter()
 @router.post("/")
 async def action(action: Action):
     configure_openai()
-    response = openai.Completion.create(
-            engine="gpt-4-32k-0613",
-            prompt=action.input,
+
+    # https://platform.openai.com/docs/guides/gpt/chat-completions-api
+    response = openai.ChatCompletion.create(
+            model="gpt-4-32k-0613",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": action.input},
+            ],
             temperature=0.5,
             max_tokens=1000
     )
-    return {"output": response.choices[0].text.strip()}
+    # TODO: return based on response.choices[n].message.role
+    return {"output": response.choices[0].message.content.strip()}
