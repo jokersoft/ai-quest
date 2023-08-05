@@ -3,3 +3,5 @@ uvicorn
 pydantic
 mangum
 openai
+sqlalchemy
+pymysql
