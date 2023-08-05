@@ -1,0 +1,33 @@
+{
+  "version": "2.0",
+  "routeKey": "ANY /api/v1/action/",
+  "rawPath": "/api/v1/action/",
+  "rawQueryString": "",
+  "headers": {
+    "accept": "*/*",
+    "content-length": "0",
+    "host": "lambda.amazonaws.com",
+    "user-agent": "Custom User Agent String",
+    "x-amzn-trace-id": "Root=1-57cf0f5c-2d78adfd13d3aff00a3ef6fc"
+  },
+  "requestContext": {
+    "accountId": "1234567890",
+    "apiId": "r3pmxmplak.execute-api.us-east-2.amazonaws.com",
+    "domainName": "r3pmxmplak.execute-api.us-east-2.amazonaws.com",
+    "domainPrefix": "r3pmxmplak",
+    "http": {
+      "method": "POST",
+      "path": "/api/v1/action/",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "IP",
+      "userAgent": "Custom User Agent String"
+    },
+    "requestId": "JKJaXmPLvHcESHA=",
+    "routeKey": "ANY /api/v1/action/",
+    "stage": "$default",
+    "time": "10/Mar/2022:05:16:23 +0000",
+    "timeEpoch": 1700571053508
+  },
+  "body": "{\"input\": \"test test\"}",
+  "isBase64Encoded": false
+}
