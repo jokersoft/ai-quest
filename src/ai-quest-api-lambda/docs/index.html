@@ -57,6 +57,15 @@
             background-color: #000;
             color: #0f0;
             font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        #submitButton:hover {
+            border-color: #9370DB;
+            color: #9370DB;
+        }
+        #submitButton:active {
+            border-color: #800080;
+            color: #800080;
         }
         .user-data {
             border: 1px solid #0f0;
@@ -64,6 +73,15 @@
             color: #0f0;
             padding: 5px;
             font-size: 16px;
+        }
+        .user-input {
+            margin-top: 10px;
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            font-size: 16px;
+            padding: 5px;
+            width: 100%;
         }
     </style>
 </head>
@@ -77,7 +95,10 @@
 </div>
 <div class="user-section">
     <h2>User Data</h2>
-    <div class="user-data" id="userData"></div>
+    <label for="playerName">Player Name</label>
+    <input type="text" id="playerName" class="user-input">
+    <label for="apiKey">API Key</label>
+    <input type="text" id="apiKey" class="user-input">
 </div>
 
 <script>
