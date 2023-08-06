@@ -23,6 +23,7 @@ async def action(action: Action):
 
     previous_messages = message_repository.get_messages_by_user_id(user_uuid)
     previous_messages_formatted = [{"role": msg.role, "content": msg.content} for msg in previous_messages]
+    logger.info(f"previous_messages count: {len(previous_messages)}")
 
     # Record the message in the database
     decision_message = Message(

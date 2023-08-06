@@ -5,6 +5,7 @@ TODO
   - return messages on action (wip)
   - return last N messages on action
   - optimise FE
+- add player name to system prompt
 - State:
   - user Name
   - health
