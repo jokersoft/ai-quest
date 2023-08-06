@@ -29,7 +29,6 @@ def test_action(mock_create, mock_get_content, mock_repo):
         response = client.post("/api/v1/action/", json={"input": "example input"})
         assert response.status_code == 200
         assert response.json() == {"messages": [
-            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "example input"},
             {"role": "assistant", "content": "test completion"}
         ]}
@@ -37,3 +36,15 @@ def test_action(mock_create, mock_get_content, mock_repo):
     # Assert that the repository's add_message and session's commit methods were called
     mock_repo.return_value.get_messages_by_user_id.assert_called_once()
     mock_repo.return_value.add_message.assert_called()
+
+    # Assert that openai.ChatCompletion.create was called with the correct messages
+    expected_messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "example input"},
+    ]
+    mock_create.assert_called_once_with(
+        model="gpt-4-32k-0613",
+        messages=expected_messages,
+        temperature=0.5,
+        max_tokens=1000
+    )
