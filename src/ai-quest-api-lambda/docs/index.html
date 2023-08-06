@@ -8,25 +8,29 @@
             margin: 0;
             box-sizing: border-box;
         }
-        @font-face {
-            font-family: 'Pixel';
-            src: url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        }
         body {
-            font-family: 'Pixel', cursive;
+            font-family: 'Courier New', monospace;
             background-color: #000;
             color: #0f0;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            height: 100vh;
+            margin: 0;
             padding: 20px;
+            border: 5px solid #0f0;
+        }
+        .chat-section, .user-section {
+            width: 80%;
+            margin: 10px;
+            border: 1px solid #0f0;
+            padding: 10px;
         }
         #scrollableTextArea {
             height: 200px;
-            width: 600px;
+            width: 100%;
             overflow-y: scroll;
-            border: 1px solid #0f0;
             background-color: #000;
             color: #0f0;
             padding: 5px;
@@ -35,31 +39,45 @@
         #inputArea {
             display: flex;
             justify-content: space-between;
-            width: 600px;
+            width: 100%;
             margin-top: 10px;
         }
         #inputField {
-            width: 480px;
+            width: 85%;
             border: 1px solid #0f0;
             background-color: #000;
             color: #0f0;
             font-size: 16px;
             resize: none;
+            padding: 5px;
         }
         #submitButton {
-            width: 100px;
+            width: 14%;
             border: 1px solid #0f0;
             background-color: #000;
             color: #0f0;
             font-size: 16px;
         }
+        .user-data {
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            padding: 5px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
-<div id="scrollableTextArea"></div>
-<div id="inputArea">
-    <textarea id="inputField"></textarea>
-    <button id="submitButton">Submit</button>
+<div class="chat-section">
+    <div id="scrollableTextArea"></div>
+    <div id="inputArea">
+        <textarea id="inputField"></textarea>
+        <button id="submitButton">Submit</button>
+    </div>
+</div>
+<div class="user-section">
+    <h2>User Data</h2>
+    <div class="user-data" id="userData"></div>
 </div>
 
 <script>
