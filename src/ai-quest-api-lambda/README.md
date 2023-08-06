@@ -1,6 +1,8 @@
 AI-Quest - is game mechanics, wrapped around your imagination.
 ===
 
+[WIP]
+
 # Domain language
 
 **Situation** - position of the Player in the game described by some conditions that require Player to make Decision.

@@ -9,7 +9,7 @@ class MessageRepository:
         self.session = Session(engine)
 
     def get_messages_by_user_id(self, user_id: UUID):
-        return self.session.query(Message).filter(Message.user_id == user_id.bytes).order_by(Message.timestamp.desc()).all()
+        return self.session.query(Message).filter(Message.user_id == user_id).order_by(Message.timestamp.desc()).all()
 
     def add_message(self, message: Message):
         self.session.add(message)

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test Page</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            border: 5px solid #0f0;
+        }
+        .chat-section, .user-section {
+            width: 80%;
+            margin: 10px;
+            border: 1px solid #0f0;
+            padding: 10px;
+        }
+        #scrollableTextArea {
+            height: 400px;
+            width: 100%;
+            overflow-y: scroll;
+            background-color: #000;
+            color: #0f0;
+            padding: 5px;
+            font-size: 16px;
+        }
+        #inputArea {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 10px;
+        }
+        #inputField {
+            width: 85%;
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            font-size: 16px;
+            resize: none;
+            padding: 5px;
+        }
+        #submitButton {
+            width: 14%;
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        #submitButton:hover {
+            border-color: #9370DB;
+            color: #9370DB;
+        }
+        #submitButton:active {
+            border-color: #800080;
+            color: #800080;
+        }
+        .user-data {
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            padding: 5px;
+            font-size: 16px;
+        }
+        .user-input {
+            margin-top: 10px;
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            font-size: 16px;
+            padding: 5px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="chat-section">
+    <div id="scrollableTextArea"></div>
+    <div id="inputArea">
+        <textarea id="inputField"></textarea>
+        <button id="submitButton">Submit</button>
+    </div>
+</div>
+<div class="user-section">
+    <h2>User Data</h2>
+    <label for="playerName">Player Name</label>
+    <input type="text" id="playerName" class="user-input">
+    <label for="apiKey">API Key</label>
+    <input type="text" id="apiKey" class="user-input">
+</div>
+
+<script>
+    document.getElementById('submitButton').addEventListener('click', function(event) {
+        event.preventDefault();
+        var inputField = document.getElementById('inputField');
+        var playerName = document.getElementById('playerName').value;
+        var apiKey = document.getElementById('apiKey').value;
+        var scrollableTextArea = document.getElementById('scrollableTextArea');
+        var data = {
+            input: inputField.value,
+            playerName: playerName,
+            apiKey: apiKey
+        };
+
+        fetch('https://ai-quest.api.jokersoft.net/api/v1/action/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+            .then(response => response.json())
+            .then(data => {
+                data.messages.forEach(message => {
+                    scrollableTextArea.innerHTML += '<p>' + message + '</p>';
+                });
+                scrollableTextArea.scrollTop = scrollableTextArea.scrollHeight;
+                inputField.value = '';
+            });
+    });
+</script>
+</body>
+</html>

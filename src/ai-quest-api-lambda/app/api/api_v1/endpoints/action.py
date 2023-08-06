@@ -22,6 +22,7 @@ async def action(action: Action):
     logger = configure_logger()
 
     previous_messages = message_repository.get_messages_by_user_id(user_uuid)
+    previous_messages_formatted = [{"role": msg.role, "content": msg.content} for msg in previous_messages]
 
     # Record the message in the database
     decision_message = Message(
@@ -40,24 +41,25 @@ async def action(action: Action):
     # https://platform.openai.com/docs/guides/gpt/chat-completions-api
     openai_response = openai.ChatCompletion.create(
             model="gpt-4-32k-0613",
-            # TODO list messages
+            # Order is: system message, previous_messages_formatted, latest user input
             messages=[
                 {"role": "system", "content": system_message},
+            ] + previous_messages_formatted + [
                 {"role": "user", "content": action.input},
             ],
             temperature=0.5,
             max_tokens=1000
     )
-    response = openai_response.choices[0].message.content
+    situation = openai_response.choices[0].message.content
 
-    # TODO: parse the response into Outcome, Situation, Decisions
+    # TODO: parse the response into Outcome, Situation, Choice, Decision
 
     # Record messages in the database
     situation_message = Message(
         id=uuid4().bytes,
         user_id=user_uuid.bytes,
         role='user',
-        content=response,
+        content=situation,
         type='situation' # TODO: unMock
     )
     logger.info("situation_message recorded")
@@ -65,5 +67,11 @@ async def action(action: Action):
     message_repository.add_message(decision_message)
     message_repository.add_message(situation_message)
 
+    # Add the OpenAI response to the messages list
+    return_messages = previous_messages_formatted + [
+        {"role": "user", "content": action.input},
+        {"role": "assistant", "content": situation}
+    ]
+
     # TODO: return based on response.choices[n].message.role
-    return {"output": response}
+    return {"messages": return_messages}
