@@ -1,0 +1,23 @@
+# Create a new directory named git_hooks
+mkdir git_hooks
+
+# Save the pre-commit script in the git_hooks directory
+cat << EOF > git_hooks/pre-commit
+#!/bin/sh
+
+if git diff --cached --name-only | grep -q "src/ai-quest-api-lambda"
+then
+    cd src/ai-quest-api-lambda
+    pytest
+    if [ $? -ne 0 ]
+    then
+        echo "Tests failed, aborting commit."
+        exit 1
+    fi
+fi
+
+exit 0
+EOF
+
+# Make the pre-commit script executable
+chmod +x git_hooks/pre-commit

@@ -22,6 +22,7 @@ async def action(action: Action):
     logger = configure_logger()
 
     previous_messages = message_repository.get_messages_by_user_id(user_uuid)
+    previous_messages_formatted = [{"role": msg.role, "content": msg.content} for msg in previous_messages]
 
     # Record the message in the database
     decision_message = Message(
@@ -40,9 +41,10 @@ async def action(action: Action):
     # https://platform.openai.com/docs/guides/gpt/chat-completions-api
     openai_response = openai.ChatCompletion.create(
             model="gpt-4-32k-0613",
-            # TODO list messages
+            # Order is: system message, previous_messages_formatted, latest user input
             messages=[
                 {"role": "system", "content": system_message},
+            ] + previous_messages_formatted + [
                 {"role": "user", "content": action.input},
             ],
             temperature=0.5,
@@ -50,7 +52,7 @@ async def action(action: Action):
     )
     response = openai_response.choices[0].message.content
 
-    # TODO: parse the response into Outcome, Situation, Decisions
+    # TODO: parse the response into Outcome, Situation, Choice, Decision
 
     # Record messages in the database
     situation_message = Message(

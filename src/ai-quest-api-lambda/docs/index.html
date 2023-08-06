@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test Page</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        @font-face {
+            font-family: 'Pixel';
+            src: url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        }
+        body {
+            font-family: 'Pixel', cursive;
+            background-color: #000;
+            color: #0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        #scrollableTextArea {
+            height: 200px;
+            width: 600px;
+            overflow-y: scroll;
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            padding: 5px;
+            font-size: 16px;
+        }
+        #inputArea {
+            display: flex;
+            justify-content: space-between;
+            width: 600px;
+            margin-top: 10px;
+        }
+        #inputField {
+            width: 480px;
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            font-size: 16px;
+            resize: none;
+        }
+        #submitButton {
+            width: 100px;
+            border: 1px solid #0f0;
+            background-color: #000;
+            color: #0f0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div id="scrollableTextArea"></div>
+<div id="inputArea">
+    <textarea id="inputField"></textarea>
+    <button id="submitButton">Submit</button>
+</div>
+
+<script>
+    document.getElementById('submitButton').addEventListener('click', function(event) {
+        event.preventDefault();
+        var inputField = document.getElementById('inputField');
+        var scrollableTextArea = document.getElementById('scrollableTextArea');
+        var data = { input: inputField.value };
+
+        fetch('https://ai-quest.api.jokersoft.net/api/v1/action/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+            .then(() => {
+                fetch('https://ai-quest.api.jokersoft.net/api/v1/messages/')
+                    .then(response => response.json())
+                    .then(data => {
+                        scrollableTextArea.innerHTML = '';
+                        data.forEach(message => {
+                            scrollableTextArea.innerHTML += '<p>' + message + '</p>';
+                        });
+                        scrollableTextArea.scrollTop = scrollableTextArea.scrollHeight;
+                    });
+                inputField.value = '';
+            });
+    });
+</script>
+</body>
+</html>
