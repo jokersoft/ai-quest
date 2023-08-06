@@ -14,3 +14,8 @@ TODO
 - authN/authZ
 
 - messages -> embeddings
+
+
+# IDEAS
+- role per Situation / Decision / Outcome
+  - name them as game Entities
