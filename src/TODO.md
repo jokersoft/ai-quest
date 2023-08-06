@@ -1,7 +1,10 @@
 TODO
 ====
 
-- messageHistory(wip)
+- messageHistory
+  - return messages on action (wip)
+  - return last N messages on action
+  - optimise FE
 - State:
   - user Name
   - health

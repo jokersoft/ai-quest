@@ -28,7 +28,7 @@
             padding: 10px;
         }
         #scrollableTextArea {
-            height: 200px;
+            height: 400px;
             width: 100%;
             overflow-y: scroll;
             background-color: #000;
@@ -105,8 +105,14 @@
     document.getElementById('submitButton').addEventListener('click', function(event) {
         event.preventDefault();
         var inputField = document.getElementById('inputField');
+        var playerName = document.getElementById('playerName').value;
+        var apiKey = document.getElementById('apiKey').value;
         var scrollableTextArea = document.getElementById('scrollableTextArea');
-        var data = { input: inputField.value };
+        var data = {
+            input: inputField.value,
+            playerName: playerName,
+            apiKey: apiKey
+        };
 
         fetch('https://ai-quest.api.jokersoft.net/api/v1/action/', {
             method: 'POST',
@@ -115,16 +121,12 @@
             },
             body: JSON.stringify(data),
         })
-            .then(() => {
-                fetch('https://ai-quest.api.jokersoft.net/api/v1/messages/')
-                    .then(response => response.json())
-                    .then(data => {
-                        scrollableTextArea.innerHTML = '';
-                        data.forEach(message => {
-                            scrollableTextArea.innerHTML += '<p>' + message + '</p>';
-                        });
-                        scrollableTextArea.scrollTop = scrollableTextArea.scrollHeight;
-                    });
+            .then(response => response.json())
+            .then(data => {
+                data.messages.forEach(message => {
+                    scrollableTextArea.innerHTML += '<p>' + message + '</p>';
+                });
+                scrollableTextArea.scrollTop = scrollableTextArea.scrollHeight;
                 inputField.value = '';
             });
     });

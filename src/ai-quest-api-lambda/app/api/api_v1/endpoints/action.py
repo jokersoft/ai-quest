@@ -38,19 +38,23 @@ async def action(action: Action):
 
     # Wrap and send to OpenAI
     system_message = content_provider.get_content('system')
+    messages=[
+        {"role": "system", "content": system_message},
+    ] + previous_messages_formatted + [
+        {"role": "user", "content": action.input},
+    ]
     # https://platform.openai.com/docs/guides/gpt/chat-completions-api
     openai_response = openai.ChatCompletion.create(
             model="gpt-4-32k-0613",
             # Order is: system message, previous_messages_formatted, latest user input
-            messages=[
-                {"role": "system", "content": system_message},
-            ] + previous_messages_formatted + [
-                {"role": "user", "content": action.input},
-            ],
+            messages=messages,
             temperature=0.5,
             max_tokens=1000
     )
     response = openai_response.choices[0].message.content
+
+    # Add the OpenAI response to the messages list
+    messages.append({"role": "assistant", "content": response})
 
     # TODO: parse the response into Outcome, Situation, Choice, Decision
 
@@ -68,4 +72,4 @@ async def action(action: Action):
     message_repository.add_message(situation_message)
 
     # TODO: return based on response.choices[n].message.role
-    return {"output": response}
+    return {"messages": messages}

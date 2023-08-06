@@ -28,7 +28,11 @@ def test_action(mock_create, mock_get_content, mock_repo):
     with mock.patch.dict('os.environ', {'DEBUG': '1', 'CONFIG': '{"openai-api-key":"test", "db-credentials":"mysql+pymysql://user:password@localhost/dbname"}'}):
         response = client.post("/api/v1/action/", json={"input": "example input"})
         assert response.status_code == 200
-        assert response.json() == {"output": "test completion"}
+        assert response.json() == {"messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "example input"},
+            {"role": "assistant", "content": "test completion"}
+        ]}
 
     # Assert that the repository's add_message and session's commit methods were called
     mock_repo.return_value.get_messages_by_user_id.assert_called_once()
