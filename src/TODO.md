@@ -12,10 +12,10 @@ TODO
   - valuables
   - karma
 - set roles https://platform.openai.com/docs/guides/gpt/chat-completions-api
-  - assistant
-  - system
-  - user
-  - function (!!!)
+  - function
+- function (!!!)
+  - if response_message.get("function_call"): https://platform.openai.com/docs/guides/gpt/function-calling
+  - "Only use the functions you have been provided with."
 - authN/authZ
 - messages -> embeddings
 - split Situations into O,S,C (or not, or denormalize ???)

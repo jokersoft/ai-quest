@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from app.schema.action import Action
 from app.config.openai import openai, configure_openai
 from app.config.logger import configure_logger
+from app.services.feedback_function_exacution_service import FeedbackFunctionExecutionService
 from app.services.situation_content_provider import SituationContentProvider
 from app.models.message import Message
 from app.repositories.message_repository import MessageRepository
@@ -52,6 +53,8 @@ async def action(action: Action):
             max_tokens=1000
     )
     situation = openai_response.choices[0].message.content
+    if situation.get("function_call"):
+        FeedbackFunctionExecutionService.execute(situation.get("function_call"))
 
     # TODO: parse the response into Outcome, Situation, Choice, Decision
 
