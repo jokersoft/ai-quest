@@ -3,7 +3,7 @@ TODO
 
 - featureSwitch: function_call.enabled
 - messageHistory
-  - return by name
+  - **return by name**
   - optimise FE
     - return last N messages on action
 - add player name to system prompt

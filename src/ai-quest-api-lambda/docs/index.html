@@ -84,6 +84,9 @@
             padding: 5px;
             width: 100%;
         }
+        .highlight {
+            background-color: rgba(128, 0, 128, 0.2);
+        }
         .loading-bar {
             height: 20px;
             background: #000;
@@ -137,9 +140,18 @@
 </div>
 
 <script>
-    document.getElementById('submitButton').addEventListener('click', function(event) {
+    document.getElementById('submitButton').addEventListener('click', submitForm);
+    document.getElementById('inputField').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            document.getElementById('submitButton').click();
+        }
+    });
+
+    function submitForm(event) {
         event.preventDefault();
         var inputField = document.getElementById('inputField');
+        var submitButton = document.getElementById('submitButton');
         var playerName = document.getElementById('playerName').value;
         var apiKey = document.getElementById('apiKey').value;
         var scrollableTextArea = document.getElementById('scrollableTextArea');
@@ -150,7 +162,8 @@
             apiKey: apiKey
         };
 
-        // Show the loading bar
+        inputField.disabled = true;
+        submitButton.disabled = true;
         loadingBar.style.width = '100%';
 
         fetch('http://localhost:8000/api/v1/action/', {
@@ -162,19 +175,27 @@
         })
             .then(response => response.json())
             .then(data => {
+                // Remove highlight from all paragraphs
+                var paragraphs = scrollableTextArea.getElementsByTagName("P");
+                for (var i = 0; i < paragraphs.length; i++) {
+                    paragraphs[i].classList.remove("highlight");
+                }
+
                 data.messages.forEach(message => {
                     var para = document.createElement("P");
-                    var text = document.createTextNode(message.role + ": " + message.content.replace(/\n/g, '<br/>') + "<br/>");
+                    var text = document.createTextNode("<br/>" + message.role + ": " + message.content.replace(/\n/g, '<br/>') + "<br/>");
                     para.innerHTML = text.nodeValue;
                     scrollableTextArea.appendChild(para);
                 });
+
+                scrollableTextArea.lastChild.classList.add("highlight");
                 scrollableTextArea.scrollTop = scrollableTextArea.scrollHeight;
                 inputField.value = '';
-
-                // Hide the loading bar
+                inputField.disabled = false;
+                submitButton.disabled = false;
                 loadingBar.style.width = '0%';
             });
-    });
+    }
 </script>
 </body>
 </html>

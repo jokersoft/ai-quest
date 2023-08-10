@@ -10,6 +10,8 @@
 */__init__.py
 *__pycache__*
 *.pytest_cache*
+./local.Dockerfile
 ./generate-openai-input.py
 ./docs/example-api-event.json
 ./docs/index.html
+./app/config/logger.py
