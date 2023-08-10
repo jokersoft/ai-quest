@@ -5,7 +5,7 @@ from uuid import uuid4
 
 Base = declarative_base()
 
-class Message(Base):
+class User(Base):
     __tablename__ = 'users'
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid4())

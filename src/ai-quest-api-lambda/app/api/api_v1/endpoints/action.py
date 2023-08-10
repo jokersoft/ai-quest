@@ -2,17 +2,18 @@ from fastapi import APIRouter, HTTPException
 from app.schema.action import Action
 from app.config.openai import openai, configure_openai
 from app.config.logger import configure_logger
-from app.services.feedback_function_exacution_service import FeedbackFunctionExecutionService
+from app.services.feedback_function_execution_service import FeedbackFunctionExecutionService
 from app.services.situation_content_provider import SituationContentProvider
 from app.models.message import Message
 from app.repositories.message_repository import MessageRepository
 from uuid import uuid4, UUID
 
 # TODO: unMock user_id
-uuid_string = '3c627569-6c74-2d69-6e20-6d6574686f64';
+uuid_string = '3c627569-6c74-2d69-6e20-6d6574686f64'
 user_uuid = UUID(uuid_string)
 
 router = APIRouter()
+
 
 @router.post("/")
 async def action(action: Action):
@@ -53,8 +54,11 @@ async def action(action: Action):
             max_tokens=1000
     )
     situation = openai_response.choices[0].message.content
-    if situation.get("function_call"):
-        FeedbackFunctionExecutionService.execute(situation.get("function_call"))
+    function_call = situation.get("function_call")
+    if function_call:
+        name = function_call.name
+        arguments = json.loads(function_call.arguments)
+        FeedbackFunctionExecutionService.execute(name, arguments)
 
     # TODO: parse the response into Outcome, Situation, Choice, Decision
 
