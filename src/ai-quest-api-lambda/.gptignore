@@ -1,10 +1,15 @@
 .git
 .gitignore
+.Dockerignore
+.gptignore
 *.md
 *.log
 *.*~
 .env
 *.sh
-.pytest_cache/
-**/__init__.py
+*/__init__.py
+*__pycache__*
+*.pytest_cache*
 ./generate-openai-input.py
+./docs/example-api-event.json
+./docs/index.html

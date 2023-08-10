@@ -1,6 +1,7 @@
 TODO
 ====
 
+- featureSwitch: function_call.enabled
 - messageHistory
   - return by name
   - optimise FE
