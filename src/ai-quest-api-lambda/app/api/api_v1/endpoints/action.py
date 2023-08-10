@@ -22,6 +22,7 @@ async def action(action: Action):
     configure_openai()
     content_provider = SituationContentProvider()
     message_repository = MessageRepository()
+    feedbackFunctionExecutionService = FeedbackFunctionExecutionService()
     logger = configure_logger()
 
     previous_messages = message_repository.get_messages_by_user_id(user_uuid)
@@ -52,6 +53,7 @@ async def action(action: Action):
                 {"role": "user", "content": action.input},
             ],
             temperature=0.5,
+            functions=feedbackFunctionExecutionService.functions,
             max_tokens=1000
     )
     situation = openai_response.choices[0].message.content
@@ -60,7 +62,7 @@ async def action(action: Action):
         logger.debug(f"function_call: {function_call.arguments}")
         name = function_call.name
         arguments = json.loads(function_call.arguments)
-        FeedbackFunctionExecutionService.execute(name, arguments)
+        feedbackFunctionExecutionService.execute(name, arguments)
 
     # TODO: parse the response into Outcome, Situation, Choice, Decision
 

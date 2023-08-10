@@ -6,7 +6,7 @@ class FeedbackFunctionExecutionService:
     def __init__(self):
         self.player_health_service = PlayerHealthService()
         with open('./app/data/multi_function_call.json', 'r') as file:
-            self.functions = file.read().strip()
+            self.functions = json.load(file)
 
         self.available_functions = []
         for function in self.functions:
@@ -19,4 +19,4 @@ class FeedbackFunctionExecutionService:
             if function_name == available_function_name:
                 function_name(**arguments)
 
-        raise ValueError(f"No function found for name: {function_call.name}")
+        raise ValueError(f"No function found for name: {function_name}")

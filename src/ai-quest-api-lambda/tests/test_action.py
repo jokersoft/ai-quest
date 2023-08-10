@@ -1,14 +1,16 @@
 from unittest import mock
 from fastapi.testclient import TestClient
 from app.main import app
+from app.models.message import Message
 
 client = TestClient(app)
 
 
+@mock.patch('app.api.api_v1.api.action.FeedbackFunctionExecutionService.execute')
 @mock.patch('app.api.api_v1.api.action.MessageRepository')
 @mock.patch('app.api.api_v1.api.action.SituationContentProvider.get_content')
 @mock.patch('app.api.api_v1.api.action.openai.ChatCompletion.create')
-def test_action(mock_create, mock_get_content, mock_repo):
+def test_action(mock_create, mock_get_content, mock_repo, mock_execute):
     mock_message = mock.Mock()
     mock_message.role = 'system'
     mock_message.content = 'test completion'
@@ -48,5 +50,6 @@ def test_action(mock_create, mock_get_content, mock_repo):
         model="gpt-4-32k-0613",
         messages=expected_messages,
         temperature=0.5,
+        functions=mock.ANY,
         max_tokens=1000
     )
