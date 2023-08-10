@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from app.config.logger import configure_logger
 from app.config.mysql import configure_mysql
-from app.models import User, Event
+from app.models.user import User
+from app.models.event import Event
 
 class PlayerHealthService:
     def __init__(self):
@@ -10,12 +11,13 @@ class PlayerHealthService:
         self.logger = configure_logger()
 
     def update_player_health(self, user_id, delta, reason, impact):
+        self.logger.debug(f"Recording health change: {user_id}, {delta}, {reason}, {impact}")
         # Record the health update event
-        event = Event(user_id=user_id, delta=delta, reason=reason, impact=impact)
-        self.session.add(event)
+        # event = Event(user_id=user_id, delta=delta, reason=reason, impact=impact)
+        # self.session.add(event)
 
         # Update the player's health
-        user = self.session.query(User).filter(User.id == user_id).one()
-        user.health += delta
+        # user = self.session.query(User).filter(User.id == user_id).one()
+        # user.health += delta
 
-        self.session.commit()
+        # self.session.commit()

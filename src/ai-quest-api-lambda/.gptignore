@@ -1,0 +1,10 @@
+.git
+.gitignore
+*.md
+*.log
+*.*~
+.env
+*.sh
+.pytest_cache/
+**/__init__.py
+./generate-openai-input.py

@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, HTTPException
 from app.schema.action import Action
 from app.config.openai import openai, configure_openai
@@ -54,8 +55,9 @@ async def action(action: Action):
             max_tokens=1000
     )
     situation = openai_response.choices[0].message.content
-    function_call = situation.get("function_call")
+    function_call =  openai_response.choices[0].message.get("function_call")
     if function_call:
+        logger.debug(f"function_call: {function_call.arguments}")
         name = function_call.name
         arguments = json.loads(function_call.arguments)
         FeedbackFunctionExecutionService.execute(name, arguments)

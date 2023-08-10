@@ -1,10 +1,9 @@
 from unittest import mock
 from fastapi.testclient import TestClient
 from app.main import app
-from sqlalchemy.orm import Session
-
 
 client = TestClient(app)
+
 
 @mock.patch('app.api.api_v1.api.action.MessageRepository')
 @mock.patch('app.api.api_v1.api.action.SituationContentProvider.get_content')
@@ -16,6 +15,9 @@ def test_action(mock_create, mock_get_content, mock_repo):
 
     mock_choice = mock.Mock()
     mock_choice.message = mock_message
+    # TODO
+    # mock_choice.message.get.return_value = mock.Mock(arguments='{"temperature": "22", "unit": "celsius", "description": "Sunny"}')
+    mock_choice.message.get.return_value = None
     mock_create.return_value = mock.Mock(choices=[mock_choice])
 
     # Mock the get_content method to return a test system message
