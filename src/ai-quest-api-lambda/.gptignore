@@ -1,11 +1,11 @@
 .git
 .gitignore
-.Dockerignore
-.gptignore
+*.Dockerignore
+*.gptignore
 *.md
 *.log
 *.*~
-.env
+*.env
 *.sh
 */__init__.py
 *__pycache__*
