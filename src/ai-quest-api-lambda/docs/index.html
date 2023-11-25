@@ -128,6 +128,7 @@
     <div id="inputArea">
         <textarea id="inputField"></textarea>
         <button id="submitButton">Submit</button>
+        <button id="fetchButton">Fetch</button>
     </div>
 </div>
 <div class="user-section">
@@ -141,12 +142,14 @@
 
 <script>
     document.getElementById('submitButton').addEventListener('click', submitForm);
+    document.getElementById('fetchButton').addEventListener('click', fetchMessages);
     document.getElementById('inputField').addEventListener('keydown', function(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
             document.getElementById('submitButton').click();
         }
     });
+    document.getElementById('loadingBar').style.width = '0%';
 
     function submitForm(event) {
         event.preventDefault();
@@ -156,8 +159,10 @@
         var apiKey = document.getElementById('apiKey').value;
         var scrollableTextArea = document.getElementById('scrollableTextArea');
         var loadingBar = document.getElementById('loadingBar');
+        var thread_id = "thread_bHWdO1CrBCxuEvUMrmgV9dyK";
         var data = {
-            input: inputField.value,
+            message: inputField.value,
+            thread_id: thread_id,
             playerName: playerName,
             apiKey: apiKey
         };
@@ -195,6 +200,34 @@
                 submitButton.disabled = false;
                 loadingBar.style.width = '0%';
             });
+    }
+
+    function fetchMessages() {
+        var scrollableTextArea = document.getElementById('scrollableTextArea');
+        fetch('http://localhost:8000/api/v1/messages/thread_bHWdO1CrBCxuEvUMrmgV9dyK', {
+            method: 'GET'
+        })
+        .then(response => response.json())
+        .then(data => {
+            scrollableTextArea.innerHTML = ''
+
+            data.messages.data.forEach(message => {
+                console.log(message)
+                let para = document.createElement("P");
+                let role = message.role;
+                let content = message.content[0].text.value;
+                let text = document.createTextNode("<br/>" + role + ": " + content.replace(/\n/g, '<br/>') + "<br/>");
+                para.innerHTML = text.nodeValue;
+                scrollableTextArea.prepend(para);
+            });
+
+            scrollableTextArea.lastChild.classList.add("highlight");
+            scrollableTextArea.scrollTop = scrollableTextArea.scrollHeight;
+            inputField.value = '';
+            inputField.disabled = false;
+            submitButton.disabled = false;
+            loadingBar.style.width = '0%';
+        });
     }
 </script>
 </body>

@@ -1,0 +1,2 @@
+I am building a python backend API on AWS lambda to support the online text-based game that is supported by ChatGPT.
+API is done with fastapi.

@@ -1,6 +1,6 @@
 [{
   "name": "multi_function",
-  "description": "Call multiple functions if needed",
+  "description": "Contains description of multiple functions. Every function has defined supported parameters. Call multiple functions if needed. Required parameters are mandatory.",
   "parameters": {
     "type": "object",
     "properties": {

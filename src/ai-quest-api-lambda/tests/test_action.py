@@ -47,7 +47,7 @@ def test_action(mock_create, mock_get_content, mock_repo, mock_execute):
         {"role": "user", "content": "example input"},
     ]
     mock_create.assert_called_once_with(
-        model="gpt-4-32k-0613",
+        model="gpt-4-1106-preview",
         messages=expected_messages,
         temperature=0.5,
         functions=mock.ANY,
