@@ -1,6 +1,7 @@
 TODO
 ====
 
+- https://cookbook.openai.com/examples/how_to_call_functions_with_chat_models
 - featureSwitch: function_call.enabled
 - messageHistory
   - **return by name**
@@ -16,6 +17,7 @@ TODO
   - function
 - function (!!!)
   - multi function: https://community.openai.com/t/emulated-multi-function-calls-within-one-request/269582/13 
+    - make it call with **required** arguments
   - if response_message.get("function_call"): https://platform.openai.com/docs/guides/gpt/function-calling
   - "Only use the functions you have been provided with."
 - authN/authZ
