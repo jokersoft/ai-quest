@@ -29,7 +29,7 @@
             padding: 10px;
         }
         #scrollableTextArea {
-            height: 400px;
+            height: 500px;
             width: 100%;
             overflow-y: scroll;
             background-color: #000;
@@ -52,7 +52,7 @@
             resize: none;
             padding: 5px;
         }
-        #submitButton {
+        #fetchButton, #submitButton {
             width: 14%;
             border: 1px solid #0f0;
             background-color: #000;
@@ -60,11 +60,11 @@
             font-size: 16px;
             transition: all 0.3s ease;
         }
-        #submitButton:hover {
+        #submitButton:hover, #fetchButton:hover {
             border-color: #9370DB;
             color: #9370DB;
         }
-        #submitButton:active {
+        #submitButton:active, #fetchButton:active {
             border-color: #800080;
             color: #800080;
         }
@@ -133,11 +133,6 @@
 </div>
 <div class="user-section">
     <div id="loadingBar" class="loading-bar"></div>
-    <h2>User Data</h2>
-    <label for="playerName">Player Name</label>
-    <input type="text" id="playerName" class="user-input">
-    <label for="apiKey">API Key</label>
-    <input type="text" id="apiKey" class="user-input">
 </div>
 
 <script>
@@ -155,16 +150,12 @@
         event.preventDefault();
         var inputField = document.getElementById('inputField');
         var submitButton = document.getElementById('submitButton');
-        var playerName = document.getElementById('playerName').value;
-        var apiKey = document.getElementById('apiKey').value;
         var scrollableTextArea = document.getElementById('scrollableTextArea');
         var loadingBar = document.getElementById('loadingBar');
-        var thread_id = "thread_bHWdO1CrBCxuEvUMrmgV9dyK";
+        var thread_id = "thread_57AvFRhC95DZewpLNf6WTMgS";
         var data = {
             message: inputField.value,
             thread_id: thread_id,
-            playerName: playerName,
-            apiKey: apiKey
         };
 
         inputField.disabled = true;
@@ -204,7 +195,7 @@
 
     function fetchMessages() {
         var scrollableTextArea = document.getElementById('scrollableTextArea');
-        fetch('http://localhost:8000/api/v1/messages/thread_bHWdO1CrBCxuEvUMrmgV9dyK', {
+        fetch('http://localhost:8000/api/v1/messages/thread_57AvFRhC95DZewpLNf6WTMgS', {
             method: 'GET'
         })
         .then(response => response.json())

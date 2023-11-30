@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from app.schema.action import Action
 from app.config.openai import configure_openai
 from app.config.logger import configure_logger
+from app.config.openai_tools_configs import tools
 from app.services.situation_content_provider import SituationContentProvider
 from uuid import UUID
 
@@ -36,7 +37,7 @@ async def action(action: Action):
         assistant_id=assistant_id,
         model="gpt-4-1106-preview",
         instructions=system_message,
-        # tools=[{"type": "code_interpreter"}, {"type": "retrieval"}]
+        tools=tools,
     )
 
     return {"run_id": run.id}
