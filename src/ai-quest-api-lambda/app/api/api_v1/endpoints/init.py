@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app.config.openai import configure_openai
 from app.config.logger import configure_logger
+from app.config.openai_tools_configs import tools_init
 from app.services.situation_content_provider import SituationContentProvider
 
 router = APIRouter()
@@ -27,7 +28,8 @@ async def init():
                 {"role": "user", "content": "Where am I?"}
             ]
         },
-        instructions=system_message
+        instructions=system_message,
+        tools=tools_init,
     )
 
     return {"thread_id": run.thread_id, "run_id": run.id, "run_status": run.status}

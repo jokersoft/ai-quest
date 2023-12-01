@@ -40,4 +40,4 @@ async def action(action: Action):
         tools=tools,
     )
 
-    return {"run_id": run.id}
+    return {"run_id": run.id, "run_status": run.status}

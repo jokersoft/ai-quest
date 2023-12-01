@@ -233,6 +233,20 @@
         });
     }
 
+    function triggerAction() {
+        console.log('triggerAction');
+        let threadId = document.getElementById('threadId').value;
+        let runId = document.getElementById('runId').value;
+
+        fetch('http://localhost:8000/api/v1/threads/' + threadId + '/runs/' + runId, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json());
+    }
+
     function pollRun(callbackFunction = ()=>{}, isLastPollSuccessFul = false, retryNumber = 0) {
         console.log('pollRun');
         let threadId = document.getElementById('threadId').value;
@@ -252,6 +266,13 @@
 
             const runStatus = run.status;
             document.getElementById('runStatus').value = runStatus;
+
+            if (runStatus === 'requires_action') {
+                console.log('run requires_action');
+                // TODO: perform action
+                // TODO: display actions
+                // OR remove if action implementd on BE
+            }
 
             if (runStatus === 'completed') {
                 console.log('poll completed!');
@@ -323,28 +344,26 @@
             },
             body: JSON.stringify(data),
         })
-            .then(response => response.json())
-            .then(data => {
-                // Remove highlight from all paragraphs
-                let paragraphs = scrollableTextArea.getElementsByTagName("P");
-                for (let i = 0; i < paragraphs.length; i++) {
-                    paragraphs[i].classList.remove("highlight");
-                }
+        .then(response => response.json())
+        .then(data => {
+            console.log('action response (data):');
+            console.log(data);
 
-                data.messages.forEach(message => {
-                    let para = document.createElement("P");
-                    let text = document.createTextNode("<br/>" + message.role + ": " + message.content.replace(/\n/g, '<br/>') + "<br/>");
-                    para.innerHTML = text.nodeValue;
-                    scrollableTextArea.appendChild(para);
-                });
+            // Remove highlight from all paragraphs
+            let paragraphs = scrollableTextArea.getElementsByTagName("P");
+            for (let i = 0; i < paragraphs.length; i++) {
+                paragraphs[i].classList.remove("highlight");
+            }
 
-                scrollableTextArea.lastChild.classList.add("highlight");
-                scrollableTextArea.scrollTop = scrollableTextArea.scrollHeight;
-                inputField.value = '';
-                inputField.disabled = false;
-                submitButton.disabled = false;
-                loadingBar.style.width = '0%';
-            });
+            let runIdField = document.getElementById('runId');
+            let runStatusField = document.getElementById('runStatus');
+            runIdField.value = data.run_id;
+            runStatusField.value = data.run_status;
+
+            setTimeout(function() {
+                refreshThread();
+            }, initTimeout);
+        });
     }
 
     function fetchMessages() {
@@ -361,6 +380,7 @@
             let loadingBar = document.getElementById('loadingBar');
             scrollableTextArea.innerHTML = ''
 
+            console.log('foreach message: ')
             data.messages.data.forEach(message => {
                 console.log(message)
                 let para = document.createElement("P");
