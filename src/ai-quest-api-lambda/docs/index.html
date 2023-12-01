@@ -52,7 +52,7 @@
             resize: none;
             padding: 5px;
         }
-        #fetchButton, #submitButton {
+        #fetchButton, #submitButton, #newGameButton {
             width: 14%;
             border: 1px solid #0f0;
             background-color: #000;
@@ -60,11 +60,11 @@
             font-size: 16px;
             transition: all 0.3s ease;
         }
-        #submitButton:hover, #fetchButton:hover {
+        #submitButton:hover, #fetchButton:hover, #newGameButton:hover {
             border-color: #9370DB;
             color: #9370DB;
         }
-        #submitButton:active, #fetchButton:active {
+        #submitButton:active, #fetchButton:active, #newGameButton:active {
             border-color: #800080;
             color: #800080;
         }
@@ -86,6 +86,24 @@
         }
         .highlight {
             background-color: rgba(128, 0, 128, 0.2);
+        }
+        #debug {
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 1000;
+        }
+        #debug textarea {
+          background-color: black;
+          border-color: #0f0;
+          color: #0f0;
+          display: block;
+          margin: 0;
+          padding: 0;
+          resize: none;
+          width: 200px;
+          height: 20px;
+          font-family: monospace;
         }
         .loading-bar {
             height: 20px;
@@ -123,6 +141,12 @@
     </style>
 </head>
 <body>
+<div id="debug">
+  <textarea id="threadId" placeholder="ThreadId"></textarea>
+  <textarea id="runId" placeholder="RunId"></textarea>
+  <textarea id="runStatus" placeholder="RunStatus"></textarea>
+</div>
+</div>
 <div class="chat-section">
     <div id="scrollableTextArea"></div>
     <div id="inputArea">
@@ -133,11 +157,16 @@
 </div>
 <div class="user-section">
     <div id="loadingBar" class="loading-bar"></div>
+    <button id="newGameButton">Start new game</button>
 </div>
 
 <script>
+    let initTimeout = 5000;
+    let pollTimeout = 5000;
+    let runPollRetries = 10;
     document.getElementById('submitButton').addEventListener('click', submitForm);
     document.getElementById('fetchButton').addEventListener('click', fetchMessages);
+    document.getElementById('newGameButton').addEventListener('click', startNewGame);
     document.getElementById('inputField').addEventListener('keydown', function(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -146,16 +175,144 @@
     });
     document.getElementById('loadingBar').style.width = '0%';
 
+    document.addEventListener("DOMContentLoaded", function() {
+        let threadIdField = document.getElementById('threadId');
+        let runIdField = document.getElementById('runId');
+        let runStatusField = document.getElementById('runStatus');
+
+        threadIdField.value = localStorage.getItem('threadId');
+        runIdField.value = localStorage.getItem('runId');
+        runStatusField.value = localStorage.getItem('runStatus');
+    });
+
+    function startNewGame() {
+        console.log('startNewGame');
+        let inputField = document.getElementById('inputField');
+        let submitButton = document.getElementById('submitButton');
+        let scrollableTextArea = document.getElementById('scrollableTextArea');
+        let loadingBar = document.getElementById('loadingBar');
+        inputField.disabled = true;
+        submitButton.disabled = true;
+        loadingBar.style.width = '100%';
+
+        scrollableTextArea.innerHTML = '';
+
+        fetch('http://localhost:8000/api/v1/init/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('init response:');
+            console.log(data);
+
+            let threadIdField = document.getElementById('threadId');
+            let runIdField = document.getElementById('runId');
+            let runStatusField = document.getElementById('runStatus');
+
+            // write down thread_id and run_id
+            threadIdField.value = data.thread_id;
+            runIdField.value = data.run_id;
+            runStatusField.value = data.run_status;
+
+            localStorage.setItem('threadId', data.thread_id);
+            localStorage.setItem('runId', data.run_id);
+            localStorage.setItem('runStatus', data.run_status);
+
+            inputField.value = '';
+            inputField.disabled = false;
+            submitButton.disabled = false;
+            loadingBar.style.width = '0%';
+        })
+        .then(data => {
+            setTimeout(function() {
+                refreshThread();
+            }, initTimeout);
+        });
+    }
+
+    function pollRun(callbackFunction = ()=>{}, isLastPollSuccessFul = false, retryNumber = 0) {
+        console.log('pollRun');
+        let threadId = document.getElementById('threadId').value;
+        let runId = document.getElementById('runId').value;
+
+        setTimeout(function() {
+            let runStatus = fetch('http://localhost:8000/api/v1/threads/' + threadId + '/runs/' + runId, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('fetch result (data):');
+                console.log(data);
+                if (data.status === 'completed') {
+                    console.log('poll completed!');
+                    isLastPollSuccessFul = true
+                }
+
+                return data.status;
+            });
+
+            document.getElementById('runStatus').value = runStatus;
+            if (isLastPollSuccessFul) {
+                document.getElementById('runId').value = '';
+                callbackFunction();
+                console.log('timeout function return');
+                return;
+            }
+
+            retryNumber++;
+            if (retryNumber < runPollRetries && !isLastPollSuccessFul) {
+                console.log('pollRun retryNumber: ' + retryNumber);
+                pollRun(callbackFunction, isLastPollSuccessFul, retryNumber);
+            }
+        }, pollTimeout)
+    }
+
+    function refreshThread() {
+        console.log('refreshThread started');
+        let threadId = document.getElementById('threadId').value;
+        let runId = document.getElementById('runId').value;
+        let runStatus = document.getElementById('runStatus').value;
+
+        if (threadId.length === 0) {
+            alert('threadId is not set');
+            return;
+        }
+
+        if (runId.length === 0) {
+            alert('runId is not set');
+            return;
+        }
+
+        if (runStatus.length === 0) {
+            alert('runStatus is not set');
+            return;
+        }
+
+        pollRun(fetchMessages);
+    }
+
     function submitForm(event) {
         event.preventDefault();
-        var inputField = document.getElementById('inputField');
-        var submitButton = document.getElementById('submitButton');
-        var scrollableTextArea = document.getElementById('scrollableTextArea');
-        var loadingBar = document.getElementById('loadingBar');
-        var thread_id = "thread_57AvFRhC95DZewpLNf6WTMgS";
-        var data = {
+        let inputField = document.getElementById('inputField');
+        let submitButton = document.getElementById('submitButton');
+        let scrollableTextArea = document.getElementById('scrollableTextArea');
+        let loadingBar = document.getElementById('loadingBar');
+        let threadId = document.getElementById('threadId').value;
+
+        if (inputField.value.length === 0) {
+            alert('Please, input your Choice!');
+            return;
+        }
+
+        let data = {
             message: inputField.value,
-            thread_id: thread_id,
+            thread_id: threadId,
         };
 
         inputField.disabled = true;
@@ -172,14 +329,14 @@
             .then(response => response.json())
             .then(data => {
                 // Remove highlight from all paragraphs
-                var paragraphs = scrollableTextArea.getElementsByTagName("P");
-                for (var i = 0; i < paragraphs.length; i++) {
+                let paragraphs = scrollableTextArea.getElementsByTagName("P");
+                for (let i = 0; i < paragraphs.length; i++) {
                     paragraphs[i].classList.remove("highlight");
                 }
 
                 data.messages.forEach(message => {
-                    var para = document.createElement("P");
-                    var text = document.createTextNode("<br/>" + message.role + ": " + message.content.replace(/\n/g, '<br/>') + "<br/>");
+                    let para = document.createElement("P");
+                    let text = document.createTextNode("<br/>" + message.role + ": " + message.content.replace(/\n/g, '<br/>') + "<br/>");
                     para.innerHTML = text.nodeValue;
                     scrollableTextArea.appendChild(para);
                 });
@@ -194,8 +351,10 @@
     }
 
     function fetchMessages() {
-        var scrollableTextArea = document.getElementById('scrollableTextArea');
-        fetch('http://localhost:8000/api/v1/messages/thread_57AvFRhC95DZewpLNf6WTMgS', {
+        console.log('fetchMessages');
+        let scrollableTextArea = document.getElementById('scrollableTextArea');
+        let threadId = document.getElementById('threadId').value;
+        fetch('http://localhost:8000/api/v1/messages/' + threadId, {
             method: 'GET'
         })
         .then(response => response.json())

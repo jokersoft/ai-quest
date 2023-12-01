@@ -24,10 +24,10 @@ async def init():
         assistant_id=assistant_id,
         thread={
             "messages": [
-                {"role": "user", "content": "Hello?"}
+                {"role": "user", "content": "Where am I?"}
             ]
         },
         instructions=system_message
     )
 
-    return {"thread_id": run.thread_id, "run_id": run.id}
+    return {"thread_id": run.thread_id, "run_id": run.id, "run_status": run.status}

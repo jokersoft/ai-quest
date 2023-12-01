@@ -7,7 +7,7 @@ I am building a text-based game that leverages OpenAI capabilities to make AI ac
 API is implemented on AWS lambda in python with fastapi and Mangum for aws lambda compatibility.
 
 I want to have the following API endpoints:
-- `POST /api/v1/action` with payload `{"message": "Hello?", "thread_id": "thread_aaaaaf"}` to
+- `POST /api/v1/action` with payload `{"message": "Where am I?", "thread_id": "thread_abcdef"}` to
 post User Action to the thread and create a run with Dungeon Master Assistant that will process the User Action
 - `GET /api/v1/messages/{threadId}` - to pull all messages from the thread.
 
