@@ -238,30 +238,27 @@
         let threadId = document.getElementById('threadId').value;
         let runId = document.getElementById('runId').value;
 
-        setTimeout(function() {
-            let runStatus = fetch('http://localhost:8000/api/v1/threads/' + threadId + '/runs/' + runId, {
+        setTimeout(async function() {
+            const run = await fetch('http://localhost:8000/api/v1/threads/' + threadId + '/runs/' + runId, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('fetch result (data):');
-                console.log(data);
-                if (data.status === 'completed') {
-                    console.log('poll completed!');
-                    isLastPollSuccessFul = true
-                }
+            .then(response => response.json());
 
-                return data.status;
-            });
+            console.log('fetch result (run):');
+            console.log(run);
 
+            const runStatus = run.status;
             document.getElementById('runStatus').value = runStatus;
-            if (isLastPollSuccessFul) {
+
+            if (runStatus === 'completed') {
+                console.log('poll completed!');
                 document.getElementById('runId').value = '';
+                isLastPollSuccessFul = true;
                 callbackFunction();
-                console.log('timeout function return');
+
                 return;
             }
 
@@ -359,6 +356,9 @@
         })
         .then(response => response.json())
         .then(data => {
+            let inputField = document.getElementById('inputField');
+            let submitButton = document.getElementById('submitButton');
+            let loadingBar = document.getElementById('loadingBar');
             scrollableTextArea.innerHTML = ''
 
             data.messages.data.forEach(message => {
@@ -377,6 +377,7 @@
             inputField.disabled = false;
             submitButton.disabled = false;
             loadingBar.style.width = '0%';
+            inputField.focus();
         });
     }
 </script>
