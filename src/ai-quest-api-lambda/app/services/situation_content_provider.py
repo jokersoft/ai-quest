@@ -8,8 +8,7 @@ class SituationContentProvider:
 
     def get_content(self, situation: str) -> str:
         file_path = self.situation_to_file_map.get(situation)
-        if file_path and os.path.isfile(file_path):
-            with open(file_path, 'r') as file:
-                return file.read().strip()
-        else:
+        if not file_path or not os.path.isfile(file_path):
             raise ValueError(f"No file found for situation: {situation} {os.getcwd()}")
+        with open(file_path, 'r') as file:
+            return file.read().strip()
