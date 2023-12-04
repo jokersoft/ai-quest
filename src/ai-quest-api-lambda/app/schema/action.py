@@ -2,4 +2,5 @@ from pydantic import BaseModel
 
 
 class Action(BaseModel):
-    input: str
+    message: str
+    thread_id: str

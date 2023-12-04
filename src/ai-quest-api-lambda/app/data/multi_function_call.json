@@ -1,0 +1,57 @@
+[{
+  "name": "multi_function",
+  "description": "Contains description of multiple functions. Every function has defined supported parameters. Call multiple functions if needed. Required parameters are mandatory.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "update_player_health": {
+        "name": "update_player_health",
+        "description": "Update player health value when Situation or Decision leads to it.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "delta": {
+              "type": "int",
+              "description": "Amount of change. Will be negative for a health loss."
+            },
+            "reason": {
+              "type": "string",
+              "description": "Sentence that describes what have happened. For example: \"Lost some health due to a fight with yourself.\""
+            },
+            "impact": {
+              "type": "string",
+              "description": "Sentence that describes the impact of the event on Player's body. For example: \"Bruises\", \"Headache\", \"Traumatising experience\"."
+            }
+          },
+          "required": ["delta", "reason", "impact"]
+        }
+      },
+      "update_player_inventory": {
+        "name": "update_player_inventory",
+        "description": "Update player inventory if Situation or Decision leads to it. (Add, remove or update)",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "string",
+              "description": "Item name"
+            },
+            "action": {
+              "type": "string",
+              "description": "What happened to the item"
+            },
+            "impact": {
+              "type": "string",
+              "description": "How the item changed if it did"
+            },
+            "status": {
+              "enum": ["added", "updated", "removed"],
+              "description": "New status of the item relative to your inventory"
+            }
+          },
+          "required": ["item", "action", "impact", "status"]
+        }
+      }
+    }
+  }
+}]

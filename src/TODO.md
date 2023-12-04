@@ -1,10 +1,12 @@
 TODO
 ====
 
+- https://cookbook.openai.com/examples/how_to_call_functions_with_chat_models
+- featureSwitch: function_call.enabled
 - messageHistory
-  - return messages on action (wip)
-  - return last N messages on action
+  - **return by name**
   - optimise FE
+    - return last N messages on action
 - add player name to system prompt
 - State:
   - user Name
@@ -12,10 +14,12 @@ TODO
   - valuables
   - karma
 - set roles https://platform.openai.com/docs/guides/gpt/chat-completions-api
-  - assistant
-  - system
-  - user
-  - function (!!!)
+  - function
+- function (!!!)
+  - multi function: https://community.openai.com/t/emulated-multi-function-calls-within-one-request/269582/13 
+    - make it call with **required** arguments
+  - if response_message.get("function_call"): https://platform.openai.com/docs/guides/gpt/function-calling
+  - "Only use the functions you have been provided with."
 - authN/authZ
 - messages -> embeddings
 - split Situations into O,S,C (or not, or denormalize ???)

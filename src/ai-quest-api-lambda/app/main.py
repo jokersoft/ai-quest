@@ -13,11 +13,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     return {"message": "root"}
 
 app.include_router(api_router, prefix="/api/v1")
+
+for route in app.routes:
+    methods = ",".join(route.methods)
+    print(f"Path: {route.path}, Method: {methods}")
 
 # for AWS Lambda compatibility:
 handler = Mangum(app)
