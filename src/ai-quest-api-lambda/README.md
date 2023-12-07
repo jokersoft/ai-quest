@@ -12,7 +12,7 @@ May lead to a different impact on player and world around. From Player health or
 permanent changes in the history of this World. Decision is normally followed by Evaluation - where the possibility
 evaluation for the planned action happens. And end with the Outcome.
 
-**Evaluation** - (almost) each Decision will be evaluated to impact both - Player and the World. Leads to an Outcome.
+**Evaluation?** - (almost) each Decision will be evaluated to impact both - Player and the World. Leads to an Outcome.
 
 **Outcome** - result of a Decision made in a certain Situation.
 

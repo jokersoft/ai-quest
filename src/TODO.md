@@ -1,33 +1,29 @@
 TODO
 ====
 
+- use completion with json_mode to prepare choices for/from current situation
+  - either create another assistant to parce choices from previous message
+  - or make it somehow call_function before Situation is generated 
 - https://cookbook.openai.com/examples/how_to_call_functions_with_chat_models
 - featureSwitch: function_call.enabled
-- messageHistory
-  - **return by name**
-  - optimise FE
-    - return last N messages on action
+- rewrite FE in react
 - add player name to system prompt
 - State:
   - user Name
   - health
   - valuables
   - karma
-- set roles https://platform.openai.com/docs/guides/gpt/chat-completions-api
-  - function
-- function (!!!)
-  - multi function: https://community.openai.com/t/emulated-multi-function-calls-within-one-request/269582/13 
-    - make it call with **required** arguments
-  - if response_message.get("function_call"): https://platform.openai.com/docs/guides/gpt/function-calling
-  - "Only use the functions you have been provided with."
+- function_execution
+  - return actions
+  - record decisions
 - authN/authZ
 - messages -> embeddings
-- split Situations into O,S,C (or not, or denormalize ???)
+- JSON
+  - display actions
+  - record decisions
 
 # Investigations
 - temperature
 
 # IDEAS
-- role per Situation / Decision / Outcome
-  - name them as game Entities
 - management simulation game

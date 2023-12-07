@@ -7,7 +7,7 @@ from app.services.situation_content_provider import SituationContentProvider
 from uuid import UUID
 
 # TODO: unMock IDs
-assistant_id = 'asst_A4n3KrD5aopvdfYrlqDJF1An'
+assistant_id = 'asst_GNZn6y1f1OE8F9CA62AlvEfn'
 uuid_string = '3c627569-6c74-2d69-6e20-6d6574686f64'
 user_uuid = UUID(uuid_string)
 
@@ -26,9 +26,7 @@ async def action(action: Action):
         role='user',
     )
 
-    # TODO: persistance here
-
-    # TODO: function calling
+    # TODO: persistance of Decision here
 
     system_message = content_provider.get_content('system')
     # https://platform.openai.com/docs/guides/function-calling/parallel-function-calling

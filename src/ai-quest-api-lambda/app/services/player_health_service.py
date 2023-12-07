@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 from app.config.logger import configure_logger
 from app.config.mysql import configure_mysql
 from app.models.user import User
-from app.models.event import Event
 
 class PlayerHealthService:
     def __init__(self):

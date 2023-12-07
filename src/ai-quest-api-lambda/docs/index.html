@@ -380,8 +380,10 @@
             let loadingBar = document.getElementById('loadingBar');
             scrollableTextArea.innerHTML = ''
 
+            console.log('data:')
+            console.log(data)
             console.log('foreach message: ')
-            data.messages.data.forEach(message => {
+            data.messages.forEach(message => {
                 console.log(message)
                 let para = document.createElement("P");
                 let role = message.role;
