@@ -1,24 +1,19 @@
 from fastapi import APIRouter
 from app.config.openai import configure_openai
 from app.config.logger import configure_logger
-from app.config.openai_tools_configs import tools_init
-from app.services.situation_content_provider import SituationContentProvider
 
 router = APIRouter()
 
 # TODO: unMock IDs
-assistant_id = 'asst_A4n3KrD5aopvdfYrlqDJF1An'
+assistant_id = 'asst_GNZn6y1f1OE8F9CA62AlvEfn'
 
 
 @router.post("/")
 async def init():
     # TODO: move to constructor
     client = configure_openai()
-    content_provider = SituationContentProvider()
     logger = configure_logger()
     logger.info(f"creating a thread")
-
-    system_message = content_provider.get_content('system')
 
     # https://platform.openai.com/docs/assistants/how-it-works/managing-threads-and-messages
     run = client.beta.threads.create_and_run(
@@ -28,8 +23,6 @@ async def init():
                 {"role": "user", "content": "Where am I?"}
             ]
         },
-        instructions=system_message,
-        tools=tools_init,
     )
 
     return {"thread_id": run.thread_id, "run_id": run.id, "run_status": run.status}

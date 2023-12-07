@@ -1,3 +1,5 @@
+.fleet
+.idea
 .git
 .gitignore
 *.Dockerignore

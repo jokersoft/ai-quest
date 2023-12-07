@@ -42,13 +42,13 @@ function_display_choices = {
     "type": "function",
     "function": {
         "name": "display_choices",
-        "description": "Before User must take a decision, it will have a list of choices to make.",
+        "description": "Every time the Dungeon Master generates a new situation, the list of possible Choices for current situation",
         "parameters": {
             "type": "object",
             "properties": {
-                "choices[]": {
+                "choices": {
                     "type": "string",
-                    "description": "Array of possible Choices for the User",
+                    "description": "Array of possible Choices for the User, separated with \";\".",
                 }
             },
             "required": ["choices"],
@@ -59,7 +59,7 @@ function_display_choices = {
 # Configs
 tools = [
     function_record_decision,
-    function_record_user_death
+    function_record_user_death,
 ]
 
 tools_init = [

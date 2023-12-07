@@ -1,9 +1,11 @@
 import os
 
+
 class SituationContentProvider:
     def __init__(self):
         self.situation_to_file_map = {
-            "system": "./app/data/prompts/system.txt",
+            "system": "./app/data/prompts/dm.txt",
+            "storyteller_message_parser": "./app/data/prompts/storyteller_message_parser.txt",
         }
 
     def get_content(self, situation: str) -> str:
