@@ -1,13 +1,16 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from app.api.api_v1.api import router as api_router
+import logging
 
+logging.basicConfig(level=logging.INFO)
 app = FastAPI()
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # warning!
+    allow_origins=["http://localhost:3000"],  # warning!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

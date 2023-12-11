@@ -1,6 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from app.config.logger import configure_logger
 from app.config.openai import configure_openai
+from app.config.mysql import get_db
 from app.services.storyteller_message_parser import StorytellerMessageParser
 from app.repositories.action_repository import ActionRepository
 
@@ -8,13 +10,12 @@ router = APIRouter()
 
 
 @router.get("/{thread_id}")
-async def messages(thread_id: str):
+async def messages(thread_id: str, db: Session = Depends(get_db)):
     # TODO: move to constructor
     logger = configure_logger()
-    configure_openai()
     client = configure_openai()
     storyteller_message_parser = StorytellerMessageParser()
-    action_repository = ActionRepository()
+    action_repository = ActionRepository(db)
     thread = client.beta.threads.messages.list(thread_id=thread_id)
     actions = []
 
@@ -36,4 +37,6 @@ async def messages(thread_id: str):
                 action = action_repository.add(last_message.id, action_text)
                 actions.append(action)
 
-    return {"messages": thread.data, "actions": [action.get('text') for action in actions]}
+    logger.debug('actions:')
+    logger.debug(actions)
+    return {"messages": thread.data, "actions": [action.text for action in actions]}

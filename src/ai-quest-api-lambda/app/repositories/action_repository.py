@@ -1,15 +1,12 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.config.logger import configure_logger
-from app.config.mysql import configure_mysql
 from app.models.action import Action
-from uuid import uuid4
 
 
 class ActionRepository:
-    def __init__(self):
-        engine = configure_mysql()
-        self.session = Session(engine)
+    def __init__(self, db_session: Session):
+        self.session = db_session
         self.logger = configure_logger()
 
     def get(self, message_id: str):
