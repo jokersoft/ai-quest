@@ -17,10 +17,16 @@ class ActionRepository:
         return actions
 
     def add(self, message_id: str, action_text: str):
-        action = Action()
-        action.message_id = message_id
-        action.text = action_text
-        self.logger.debug(f"Adding action to message_id {action.message_id} with textlen {len(action_text)}")
+        action = Action(message_id=message_id, text=action_text)
         self.session.add(action)
         self.session.commit()
         return action
+
+    def add_all(self, message_id: str, action_texts: list):
+        actions = []
+        for action_text in action_texts:
+            actions.append(Action(message_id=message_id, text=action_text))
+
+        self.session.add_all(actions)
+        self.session.commit()
+        return actions

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, exc
 from app.config.logger import configure_logger
 from app.config.openai import configure_openai
 from app.config.mysql import get_db
@@ -31,12 +31,16 @@ async def messages(thread_id: str, db: Session = Depends(get_db)):
             logger.debug('message_as_json:')
             logger.debug(message_as_json)
 
+            actions_texts = []
             for action_text in message_as_json.get('actions'):
-                logger.debug('new action:')
+                logger.debug('new action text:')
                 logger.debug(action_text)
-                action = action_repository.add(last_message.id, action_text)
-                actions.append(action)
+                actions_texts.append(action_text)
+            actions = action_repository.add_all(last_message.id, actions_texts)
 
-    logger.debug('actions:')
+    logger.debug('Returned actions:')
     logger.debug(actions)
+    logger.debug('action.text for action in actions:')
+    logger.debug([action.text for action in actions])
+
     return {"messages": thread.data, "actions": [action.text for action in actions]}
