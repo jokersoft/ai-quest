@@ -1,4 +1,4 @@
-AI-Quest - is game mechanics, wrapped around your imagination.
+AI-Quest - is game mechanics, wrapped around ~~your imagination~~ generative AI.
 ===
 
 [WIP]
@@ -25,6 +25,8 @@ evaluation for the planned action happens. And end with the Outcome.
 
 # TODO
 
+- separate Actions from Situation
+    - by doing a 2nd call to 2nd Assistant specifically to generate certain ammount of possible actions based on the DM Assistant 
 - World description
 - Stats description
     - Karma

@@ -1,15 +1,12 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.config.logger import configure_logger
-from app.config.mysql import configure_mysql
 from app.models.action import Action
-from uuid import uuid4
 
 
 class ActionRepository:
-    def __init__(self):
-        engine = configure_mysql()
-        self.session = Session(engine)
+    def __init__(self, db_session: Session):
+        self.session = db_session
         self.logger = configure_logger()
 
     def get(self, message_id: str):
@@ -20,10 +17,16 @@ class ActionRepository:
         return actions
 
     def add(self, message_id: str, action_text: str):
-        action = Action()
-        action.message_id = message_id
-        action.text = action_text
-        self.logger.debug(f"Adding action to message_id {action.message_id} with textlen {len(action_text)}")
+        action = Action(message_id=message_id, text=action_text)
         self.session.add(action)
         self.session.commit()
         return action
+
+    def add_all(self, message_id: str, action_texts: list):
+        actions = []
+        for action_text in action_texts:
+            actions.append(Action(message_id=message_id, text=action_text))
+
+        self.session.add_all(actions)
+        self.session.commit()
+        return actions
