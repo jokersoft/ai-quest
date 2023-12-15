@@ -72,8 +72,8 @@ class MainView extends React.Component {
             })
         })
         .then(data => {
-            setTimeout(function() {
-                this.fetchMessages();
+            setTimeout(() => {
+                this.pollRun();
             }, initTimeout);
         });
     };

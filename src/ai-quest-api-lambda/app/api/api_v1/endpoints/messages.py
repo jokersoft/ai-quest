@@ -19,6 +19,9 @@ async def messages(thread_id: str, db: Session = Depends(get_db)):
     thread = client.beta.threads.messages.list(thread_id=thread_id)
     actions = []
 
+    logger.debug('thread:')
+    logger.debug(thread)
+
     logger.debug('last message:')
     logger.debug(thread.data[0])
     if thread.data and thread.data[0].role == 'assistant':
