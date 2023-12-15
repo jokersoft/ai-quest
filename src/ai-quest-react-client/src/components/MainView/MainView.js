@@ -13,17 +13,15 @@ class MainView extends React.Component {
             isLoading: false
         };
         this.messageEndRef = React.createRef();
+        this.inputFieldRef = React.createRef();
     }
 
     componentDidMount() {
         console.log('componentDidMount');
-        this.fetchMessages();
 
-        // Replicating DOMContentLoaded behavior
         const { threadId, runId, runStatus } = this.state;
-
         if (threadId && runId && runStatus) {
-            this.refreshThread();
+            this.fetchMessages();
         }
     }
 
@@ -46,13 +44,43 @@ class MainView extends React.Component {
         }
     };
 
+    renderLoader = () => {
+        return (
+            <div className="loader"></div>
+            );
+    };
+
     startNewGame = async () => {
         console.log('startNewGame');
-        // TODO
+        const initTimeout = 5000;
+        const url = 'http://localhost:8000/api/v1/init/';
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('init response:');
+            console.log(data);
+
+            this.setState({
+                runId: data.run_id,
+                runStatus: data.run_status,
+                threadId: data.thread_id
+            })
+        })
+        .then(data => {
+            setTimeout(function() {
+                this.fetchMessages();
+            }, initTimeout);
+        });
     };
 
     submitForm = async () => {
         console.log('submitForm');
+        this.setState({ isLoading: true });
         const pollTimeout = 5000;
         const url = 'http://localhost:8000/api/v1/action/';
         let data = {
@@ -80,10 +108,14 @@ class MainView extends React.Component {
                 console.log(data);
                 this.setState({
                     runId: data.run_id,
-                    runStatus: data.run_status
+                    runStatus: data.run_status,
+                    message: '',
+                    isLoading: false
+                }, () => {
+                    this.inputFieldRef.current?.focus();
                 })
                 setTimeout(async () => {
-                    this.pollRun(this.fetchMessages);
+                    await this.pollRun(this.fetchMessages);
                 }, pollTimeout);
             })
             .catch(error => {
@@ -110,6 +142,7 @@ class MainView extends React.Component {
             .then(data => {
                 console.log('data');
                 console.log(data);
+
                 // Assuming the data returned is an object with a 'messages' array
                 this.setState({
                     messages: data.messages,
@@ -124,9 +157,13 @@ class MainView extends React.Component {
     
     renderMessages = () => {
         const reversedMessages = [...this.state.messages].reverse();
-        return reversedMessages.map((message, index) => (
-            <p key={index}>{message.content[0].text.value}</p>
-            ));
+        return reversedMessages.map((message, index) => {
+            const splitMessage = message.content[0].text.value.split('\n').join('</p><p>');
+            const messageClass = message.role === 'user' ? 'message-user' : '';
+            return (
+                <p key={index} dangerouslySetInnerHTML={{ __html: splitMessage }} className={messageClass}></p>
+            );
+        });
     };
 
     pollRun = async (callbackFunction = () => {}, retryNumber = 0) => {
@@ -180,6 +217,7 @@ class MainView extends React.Component {
 
         return (
             <div className="main-view">
+                {isLoading && this.renderLoader()}
                 <div id="debug">
                     <textarea
                         name="threadId"
@@ -211,20 +249,20 @@ class MainView extends React.Component {
                             name="message"
                             value={message}
                             onChange={this.handleInputChange}
-                            onKeyPress={(e) => {
+                            onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
                                 this.submitForm();
                             }
                         }}
                             disabled={isLoading}
+                            ref={this.inputFieldRef}
                         />
                         <button className="button" onClick={this.submitForm} disabled={isLoading}>Submit</button>
                         <button className="button" onClick={this.fetchMessages} disabled={isLoading}>Fetch</button>
                     </div>
                 </div>
                 <div className="user-section">
-                    <div id="loadingBar" className={`loading-bar ${isLoading ? 'loading' : ''}`}></div>
                     <button className="button" onClick={this.startNewGame} disabled={isLoading}>Start new game</button>
                 </div>
             </div>

@@ -8,6 +8,7 @@ class ActionRepository:
     def __init__(self, db_session: Session):
         self.session = db_session
         self.logger = configure_logger()
+        self.session.expire_on_commit = False
 
     def get(self, message_id: str):
         sql = text("SELECT * FROM actions WHERE message_id = :message_id")
