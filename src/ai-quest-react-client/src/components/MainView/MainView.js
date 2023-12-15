@@ -10,6 +10,7 @@ class MainView extends React.Component {
             runStatus: localStorage.getItem('runStatus') || '',
             message: '',
             messages: [],
+            actions: [],
             isLoading: false
         };
         this.messageEndRef = React.createRef();
@@ -48,6 +49,24 @@ class MainView extends React.Component {
         return (
             <div className="loader"></div>
             );
+    };
+
+    renderActions = () => {
+        console.log('renderActions:');
+        console.log(this.state.actions);
+        return this.state.actions.map((action, index) => (
+            <button
+                key={index}
+                className="action-button"
+                onClick={() => this.handleActionClick(action)}
+                >
+                {action}
+            </button>
+            ));
+    };
+
+    handleActionClick = (action) => {
+        console.log('handleActionClick');
     };
 
     startNewGame = async () => {
@@ -110,6 +129,7 @@ class MainView extends React.Component {
                     runId: data.run_id,
                     runStatus: data.run_status,
                     message: '',
+                    actions: data.actions || [],
                     isLoading: false
                 }, () => {
                     this.inputFieldRef.current?.focus();
@@ -146,6 +166,7 @@ class MainView extends React.Component {
                 // Assuming the data returned is an object with a 'messages' array
                 this.setState({
                     messages: data.messages,
+                    actions: data.actions || [],
                     isLoading: false
                 }, this.scrollToBottom);
             })
@@ -242,6 +263,9 @@ class MainView extends React.Component {
                     <div className="scrollable-text-area">
                         {this.renderMessages()}
                         <div ref={this.messageEndRef} />
+                    </div>
+                    <div className="actions-container">
+                        {this.renderActions()}
                     </div>
                     <div className="input-area">
                         <textarea
