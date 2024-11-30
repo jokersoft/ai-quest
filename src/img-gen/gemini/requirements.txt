@@ -1,0 +1,3 @@
+git+https://github.com/google-gemini/generative-ai-python@imagen
+python-dotenv
+Pillow
