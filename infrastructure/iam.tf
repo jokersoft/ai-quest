@@ -10,6 +10,18 @@ data "aws_iam_policy_document" "api_lambda" {
       "autoscaling:Describe*",
       "cloudwatch:*",
       "logs:*",
+      "secretsmanager:GetSecretValue",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+      "ec2:AssignPrivateIpAddresses",
+      "ec2:UnassignPrivateIpAddresses"
     ]
     resources = ["*"]
   }

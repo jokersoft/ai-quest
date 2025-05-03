@@ -1,0 +1,11 @@
+- init API endpoint
+  - story init
+- UserId
+- action API endpoint
+  - story upsert
+- json format
+
+- FE (try Vertex AI)
+- use Anthropic tools (https://github.com/anthropics/courses/blob/master/tool_use/01_tool_use_overview.ipynb)
+  - e.g. to calculate health
+- streaming
