@@ -1,5 +1,4 @@
 import logging
-from typing import Tuple, List
 
 from sqlalchemy.orm import Session
 from uuid import uuid4

@@ -1,5 +1,5 @@
 TODO
 ====
 
-- test DB connection
-  - inject credentials by name
+- inject credentials by name
+- add API-key

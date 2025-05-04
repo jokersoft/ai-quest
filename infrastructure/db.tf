@@ -16,7 +16,8 @@ resource "aws_security_group" "aurora_sg" {
     from_port       = 3306 # (MySQL)
     to_port         = 3306
     protocol        = "tcp"
-    security_groups = [aws_security_group.lambda_sg.id]
+    cidr_blocks = var.is_db_public ? ["0.0.0.0/0"] : []  # Allow connections from any IP address
+    security_groups = var.is_db_public ? [] : [aws_security_group.lambda_sg.id] # restrict access to the Lambda security group
   }
 
   egress {
@@ -65,5 +66,5 @@ resource "aws_rds_cluster_instance" "aurora_instances" {
   instance_class      = "db.serverless"  # Required for Serverless v2
   engine              = aws_rds_cluster.aurora_cluster.engine
   engine_version      = aws_rds_cluster.aurora_cluster.engine_version
-  publicly_accessible = false
+  publicly_accessible = var.is_db_public # Set to false for production environments
 }
