@@ -6,7 +6,7 @@ variable "region" {
   type = string
 }
 
-variable "image_version" {
+variable "image_tag" {
   type    = string
   default = "latest"
 }

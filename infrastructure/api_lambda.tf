@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "api_lambda" {
-  image_uri     = "${data.aws_ecr_repository.navan_lm.repository_url}:${var.image_version}"
+  image_uri     = "${data.aws_ecr_repository.navan_lm.repository_url}:${var.image_tag}"
   package_type  = "Image"
   function_name = "${var.name}-api-lambda"
   timeout       = 60
@@ -8,13 +8,14 @@ resource "aws_lambda_function" "api_lambda" {
 
   environment {
     variables = {
-      CONFIG = data.aws_secretsmanager_secret_version.configs.secret_string
-      DEBUG  = 1
+      CONFIG       = data.aws_secretsmanager_secret_version.configs.secret_string
+      DATABASE_URL = local.secrets["db-credentials"]
+      DEBUG        = 1
     }
   }
 
   vpc_config {
-    subnet_ids         = data.aws_subnets.default.ids
+    subnet_ids = data.aws_subnets.default.ids
     security_group_ids = [aws_security_group.lambda_sg.id]
   }
 
@@ -29,23 +30,23 @@ resource "aws_security_group" "lambda_sg" {
   vpc_id      = data.aws_vpc.default.id
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
 resource "aws_lambda_function_url" "api_lambda" {
- function_name      = aws_lambda_function.api_lambda.function_name
- authorization_type = "NONE"
+  function_name      = aws_lambda_function.api_lambda.function_name
+  authorization_type = "NONE"
 
- cors {
-   allow_credentials = true
-   allow_origins     = ["*"]
-   allow_methods     = ["*"]
-   allow_headers     = ["*"]
-   expose_headers    = ["*"]
-   max_age           = 86400
- }
+  cors {
+    allow_credentials = true
+    allow_origins = ["*"]
+    allow_methods = ["*"]
+    allow_headers = ["*"]
+    expose_headers = ["*"]
+    max_age           = 86400
+  }
 }
