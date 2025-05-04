@@ -50,11 +50,6 @@ jobs:
       - name: Define FULL_IMAGE_TAG
         run: echo "FULL_IMAGE_TAG=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.AWS_ECR_REPOSITORY }}:${{ github.event.inputs.version || env.version }}" >> $GITHUB_ENV
 
-      - name: Check if image already exists
-        run: |
-          IMAGE_EXISTS=$(aws ecr describe-images --repository-name ${{ env.AWS_ECR_REPOSITORY }} --image-ids imageTag=${{ github.event.inputs.version || env.version }} --region ${{ env.AWS_REGION }} | jq -r '.imageDetails | length > 0')
-          echo "IMAGE_EXISTS=$IMAGE_EXISTS" >> $GITHUB_ENV
-
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -65,6 +60,11 @@ jobs:
       - name: Log in to Amazon ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Check if image already exists
+        run: |
+          IMAGE_EXISTS=$(aws ecr describe-images --repository-name ${{ env.AWS_ECR_REPOSITORY }} --image-ids imageTag=${{ github.event.inputs.version || env.version }} --region ${{ env.AWS_REGION }} | jq -r '.imageDetails | length > 0')
+          echo "IMAGE_EXISTS=$IMAGE_EXISTS" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -81,6 +81,7 @@ jobs:
           file: ${{ env.BUILD_FOLDER }}/Dockerfile
           push: true
           load: false # make image available for local Docker commands
+          platforms: linux/amd64 # Explicitly specify platform for Lambda compatibility
           tags: ${{ env.FULL_IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
