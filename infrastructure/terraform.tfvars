@@ -1,3 +1,3 @@
 name      = "ai-quest"
 region    = "eu-central-1"
-image_tag = "0.0.8"
+image_tag = "f4baf69"
