@@ -13,4 +13,4 @@ class PromptProvider:
             with open(file_path, 'r') as file:
                 return file.read()
         except FileNotFoundError:
-            return f"Prompt '{prompt_name}' not found."
+            return f"Prompt '{prompt_name}' not found in {self.directory_path}."
