@@ -16,4 +16,4 @@ RUN poetry install --no-interaction --no-root
 # Copy the rest of the application
 COPY app/ ./app/
 
-CMD [ "app.lambda_handler.handler" ]
+CMD [ "app.main.handler" ]

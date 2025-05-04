@@ -1,4 +1,5 @@
 import fastapi
+from mangum import Mangum
 from sqlalchemy.orm import Session
 
 from app.clients import llm_client, db_client
@@ -34,3 +35,6 @@ def init(db: Session = fastapi.Depends(db_client.get_db)) -> tuple[Story, list[M
 def init(action: str):
     # TODO
     raise NotImplemented()
+
+# for AWS Lambda compatibility:
+handler = Mangum(app)
