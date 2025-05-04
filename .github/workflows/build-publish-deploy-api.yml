@@ -81,7 +81,6 @@ jobs:
           file: ${{ env.BUILD_FOLDER }}/Dockerfile
           push: true
           load: false # make image available for local Docker commands
-          platforms: linux/amd64 # Explicitly specify platform for Lambda compatibility
           tags: ${{ env.FULL_IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
