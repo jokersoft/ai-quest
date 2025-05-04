@@ -1,4 +1,4 @@
 name         = "ai-quest"
 region       = "eu-central-1"
-image_tag    = "2a0b822"
+image_tag    = "bd1504b"
 is_db_public = true
