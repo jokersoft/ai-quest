@@ -41,7 +41,8 @@ jobs:
           fetch-depth: 0
 
       - name: Set version for push to main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # TODO: uncomment
+        # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - run: git checkout ${{ github.event.inputs.version || env.version  }}
