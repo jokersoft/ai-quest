@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "api_lambda" {
-  image_uri     = "${data.aws_ecr_repository.navan_lm.repository_url}:${var.image_version}"
+  image_uri     = "${data.aws_ecr_repository.navan_lm.repository_url}:${var.image_tag}"
   package_type  = "Image"
   function_name = "${var.name}-api-lambda"
   timeout       = 60
@@ -8,26 +8,46 @@ resource "aws_lambda_function" "api_lambda" {
 
   environment {
     variables = {
-      CONFIG = data.aws_secretsmanager_secret_version.configs.secret_string
-      DEBUG  = 1
+      DATABASE_URL = local.secrets["db-credentials"]
+      CONFIG       = data.aws_secretsmanager_secret_version.configs.secret_string
+      APP_VERSION  = var.image_tag
+      DEBUG        = 1
     }
+  }
+
+  vpc_config {
+    subnet_ids = data.aws_subnets.default.ids
+    security_group_ids = [aws_security_group.lambda_sg.id]
   }
 
   depends_on = [
     aws_iam_role_policy_attachment.api_lambda,
   ]
 }
-#
-#resource "aws_lambda_function_url" "api_lambda" {
-#  function_name      = aws_lambda_function.api_lambda.function_name
-#  authorization_type = "NONE"
-#
-#  cors {
-#    allow_credentials = true
-#    allow_origins     = ["*"]
-#    allow_methods     = ["*"]
-#    allow_headers     = ["*"]
-#    expose_headers    = ["*"]
-#    max_age           = 86400
-#  }
-#}
+
+resource "aws_security_group" "lambda_sg" {
+  name        = "${var.name}-lambda-sg"
+  description = "Security group for Lambda function"
+  vpc_id      = data.aws_vpc.default.id
+
+  egress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_lambda_function_url" "api_lambda" {
+  function_name      = aws_lambda_function.api_lambda.function_name
+  authorization_type = "NONE"
+
+  cors {
+    allow_credentials = true
+    allow_origins = ["*"]
+    allow_methods = ["*"]
+    allow_headers = ["*"]
+    expose_headers = ["*"]
+    max_age           = 86400
+  }
+}

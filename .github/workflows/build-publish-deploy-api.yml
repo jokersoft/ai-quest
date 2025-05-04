@@ -1,0 +1,93 @@
+name: Build publish deploy API
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Commit or short-sha tag to build'
+        required: true
+  push:
+    branches:
+      - main
+
+env:
+  APP_NAME: ai-quest-api
+  APP_ENV: dev
+  AWS_ECR_REPOSITORY: ai-quest/api-lambda
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ASSUME_ROLE_NAME: ai-quest-gha-role
+  AWS_SECRET_ID: ai-quest
+  BUILD_FOLDER: ./src/ai-quest-api
+
+jobs:
+  build-publish-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set version for push to main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - run: git checkout ${{ github.event.inputs.version || env.version  }}
+
+      - name: Define FULL_IMAGE_TAG
+        run: echo "FULL_IMAGE_TAG=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.AWS_ECR_REPOSITORY }}:${{ github.event.inputs.version || env.version }}" >> $GITHUB_ENV
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ASSUME_ROLE_NAME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Check if image already exists
+        run: |
+          IMAGE_EXISTS=$(aws ecr describe-images --repository-name ${{ env.AWS_ECR_REPOSITORY }} --image-ids imageTag=${{ github.event.inputs.version || env.version }} --region ${{ env.AWS_REGION }} | jq -r '.imageDetails | length > 0')
+          echo "IMAGE_EXISTS=$IMAGE_EXISTS" >> $GITHUB_ENV
+
+      - name: Build and push Lambda-compatible Docker image
+        run: |
+          # Disable BuildKit to ensure Docker V2 Schema 2 format
+          DOCKER_BUILDKIT=0 docker build \
+            -t ${{ env.FULL_IMAGE_TAG }} \
+            -f ${{ env.BUILD_FOLDER }}/Dockerfile \
+            ${{ env.BUILD_FOLDER }}
+          
+          # Push the image to ECR
+          docker push ${{ env.FULL_IMAGE_TAG }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: 1.10.5
+
+      - name: Update ECS Task Definition
+        run: |
+          cd infrastructure
+          terraform init
+          terraform apply -auto-approve -var="image_tag=${{ github.event.inputs.version || env.version }}"  
+
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            core.summary
+              .addHeading('Build Summary')
+              .addTable([
+                [{data: 'Version', header: true}, {data: 'Full image tag', header: true}],
+                ['${{ github.event.inputs.version || env.version }}', '${{ env.FULL_IMAGE_TAG }}']
+              ])
+              .write()

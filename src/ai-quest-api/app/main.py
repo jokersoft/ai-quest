@@ -1,17 +1,16 @@
-import dotenv
 import fastapi
-import os
+from mangum import Mangum
+from sqlalchemy.orm import Session
 
-from anthropic import Anthropic
-
-
-dotenv.load_dotenv()
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-opus-20240229")
-client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+from app.clients import llm_client, db_client
+from app.entities.message import Message
+from app.entities.story import Story
+from app.services.story import StoryService
+from app.schemas.story import Story
+from app.schemas.message import Message
 
 app = fastapi.FastAPI()
-
+llm_client = llm_client.create_client()
 
 @app.get("/health")
 def health_check():
@@ -20,14 +19,22 @@ def health_check():
 
 @app.post("/ask")
 def ask(question: str):
-    message = client.messages.create(
-        max_tokens=1024,
-        messages=[
-            {
-                "role": "user",
-                "content": question,
-            }
-        ],
-        model=ANTHROPIC_MODEL,
-    )
-    return {"response": message.content}
+    response = llm_client.ask(question)
+    return {"response": response}
+
+
+@app.post("/init", response_model=tuple[Story, list[Message]])
+def init(db: Session = fastapi.Depends(db_client.get_db)) -> tuple[Story, list[Message]]:
+    story_service = StoryService(db)
+    story, messages = story_service.init_story()
+
+    return story, messages
+
+
+@app.post("/act")
+def init(action: str):
+    # TODO
+    raise NotImplemented()
+
+# for AWS Lambda compatibility:
+handler = Mangum(app)
