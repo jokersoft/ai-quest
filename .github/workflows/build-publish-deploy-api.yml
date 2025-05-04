@@ -66,27 +66,16 @@ jobs:
           IMAGE_EXISTS=$(aws ecr describe-images --repository-name ${{ env.AWS_ECR_REPOSITORY }} --image-ids imageTag=${{ github.event.inputs.version || env.version }} --region ${{ env.AWS_REGION }} | jq -r '.imageDetails | length > 0')
           echo "IMAGE_EXISTS=$IMAGE_EXISTS" >> $GITHUB_ENV
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Create and use a new builder instance
+      - name: Build and push Lambda-compatible Docker image
         run: |
-          docker buildx create --use --name mybuilder --driver docker-container --buildkitd-flags '--allow-insecure-entitlement security.insecure'
-          docker buildx inspect mybuilder --bootstrap
-
-      - name: Build Docker image, remote version, with caching
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{ env.BUILD_FOLDER }}/
-          file: ${{ env.BUILD_FOLDER }}/Dockerfile
-          push: true
-          load: false # make image available for local Docker commands
-          tags: ${{ env.FULL_IMAGE_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            APP_NAME=${{ env.APP_NAME }}
-            APP_ENV=${{ env.APP_ENV }}
+          # Disable BuildKit to ensure Docker V2 Schema 2 format
+          DOCKER_BUILDKIT=0 docker build \
+            -t ${{ env.FULL_IMAGE_TAG }} \
+            -f ${{ env.BUILD_FOLDER }}/Dockerfile \
+            ${{ env.BUILD_FOLDER }}
+          
+          # Push the image to ECR
+          docker push ${{ env.FULL_IMAGE_TAG }}
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3.1.2

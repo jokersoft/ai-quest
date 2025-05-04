@@ -1,4 +1,5 @@
-FROM public.ecr.aws/lambda/python:3.12
+# https://gallery.ecr.aws/lambda/python
+FROM public.ecr.aws/lambda/python:3.13
 
 # Install Poetry
 RUN pip install poetry
