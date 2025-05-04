@@ -9,6 +9,7 @@ resource "aws_lambda_function" "api_lambda" {
   environment {
     variables = {
       DATABASE_URL = local.secrets["db-credentials"]
+      API_KEY = local.secrets["api-key"]
       CONFIG       = data.aws_secretsmanager_secret_version.configs.secret_string
       APP_VERSION  = var.image_tag
       DEBUG        = 1
