@@ -1,11 +1,10 @@
 import os
-import sys
 
 
 class PromptProvider:
     def __init__(self):
-        app_root_folder = os.path.dirname(os.path.abspath(sys.argv[0]))
-        self.directory_path = f"{app_root_folder}/static/prompts"
+        app_root_folder = os.path.dirname(os.path.abspath(__file__))
+        self.directory_path = os.path.join(app_root_folder, '../static/prompts')
 
     def get(self, prompt_name):
         file_path = os.path.join(self.directory_path, f"{prompt_name}.txt")
