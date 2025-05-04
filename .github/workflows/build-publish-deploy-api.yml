@@ -6,15 +6,9 @@ on:
       version:
         description: 'Commit or short-sha tag to build'
         required: true
-      disable_cache:
-        description: 'Disable cache for Docker build'
-        required: false
-        default: false
-        type: boolean
   push:
     branches:
       - main
-      - backend-base-app
 
 env:
   APP_NAME: ai-quest-api
@@ -41,8 +35,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set version for push to main
-        # TODO: uncomment
-        # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - run: git checkout ${{ github.event.inputs.version || env.version  }}
