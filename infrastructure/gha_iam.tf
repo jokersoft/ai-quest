@@ -137,7 +137,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "kms:Decrypt",
         ]
         Resource = [
-          data.aws_secretsmanager_secret_version.app_secrets.arn,
+          data.aws_secretsmanager_secret_version.configs.arn,
         ]
       },
       {
