@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
-import os
 import logging
 
 import anthropic
-from app.clients.config import config
+from app.clients import config
+from app.services.prompt_provider import PromptProvider
 
 _LOGGER = logging.getLogger(__name__)
+config = config.Config()
+
 
 class LLMClient(ABC):
     @abstractmethod
@@ -24,14 +26,16 @@ class AnthropicClient(LLMClient):
     """
     def __init__(self):
         self.client = anthropic.Anthropic(
-            api_key=config.get("anthropic-api-key"),
+            api_key=config.anthropic_api_key,
             max_retries=0,
             timeout=20.0,  # seconds
         )
-        self.model = os.getenv("ANTHROPIC_MODEL", "claude-3-opus-20240229")
-        self.max_tokens = os.getenv("MAX_TOKENS", 1024)
+        self.model = config.anthropic_model
+        self.max_tokens = config.anthropic_max_tokens
+        self.system_prompt = PromptProvider().get("system")
 
-    def ask(self, question: str) -> dict:
+
+    def ask(self, question: str) -> str:
         try:
             response = self.client.messages.create(
                 max_tokens=self.max_tokens,
@@ -42,6 +46,7 @@ class AnthropicClient(LLMClient):
                     }
                 ],
                 model=self.model,
+                system=self.system_prompt,
             )
         except anthropic.APIConnectionError as e:
             _LOGGER.exception("The server could not be reached", e.__cause__)
@@ -56,33 +61,38 @@ class AnthropicClient(LLMClient):
             _LOGGER.exception("An unexpected error occurred", e.__cause__)
             raise e
 
-        return {"response": response.content}
+        _LOGGER.warning("anthropic.response")
+        _LOGGER.warning(response)
+
+        return response.content[0]
 
     def send_messages(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
         try:
             response = self.client.messages.create(
                 max_tokens=self.max_tokens,
                 messages=messages,
-                tools=tools,
-                response_format={"type": "json_object"},
                 model=self.model,
+                system=self.system_prompt,
             )
         except anthropic.APIConnectionError as e:
             _LOGGER.exception("The server could not be reached", e.__cause__)
+            raise e
         except anthropic.RateLimitError as e:
             _LOGGER.exception("The rate limit was exceeded", e.__cause__)
+            raise e
         except anthropic.APIStatusError as e:
             _LOGGER.exception("The API returned an error", e.__cause__)
+            raise e
         except Exception as e:
             _LOGGER.exception("An unexpected error occurred", e.__cause__)
+            raise e
 
-        return {"response": response.content}
+        return response.content[0].text
 
 
 def create_client() -> LLMClient:
-    client_type = os.getenv("LLM_CLIENT_TYPE", "anthropic")
-    if client_type == "anthropic":
+    if config.llm_client_type == "anthropic":
         return AnthropicClient()
     # Add more conditions here for other clients
     else:
-        raise ValueError(f"Unsupported LLM client type: {client_type}")
+        raise ValueError(f"Unsupported LLM client type: {config.llm_client_type}")

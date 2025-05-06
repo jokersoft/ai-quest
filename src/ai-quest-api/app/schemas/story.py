@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from app.schemas import message
 
 class Story(BaseModel):
     id: str
@@ -7,3 +7,6 @@ class Story(BaseModel):
 
     class Config:
         from_attributes = True
+
+class FullStory(Story):
+    messages: list[message.Message]

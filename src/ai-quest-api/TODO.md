@@ -1,6 +1,8 @@
 TODO
 ====
 
-- inject credentials by name
-- add API-key
+- minimal API interface to function
+  - act
+- minimal UI to function
 - basic test
+- gmail auth
