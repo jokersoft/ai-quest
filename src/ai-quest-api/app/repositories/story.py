@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from app.entities.story import Story
 
@@ -18,5 +17,5 @@ class StoryRepository:
         self.db_session.refresh(story)
         return story
 
-    def get(self, story_id: uuid.UUID) -> Story:
-        return self.db_session.query(Story).filter(Story.id == story_id).first()
+    def get(self, story_id_bytes: bytes) -> Story:
+        return self.db_session.query(Story).filter(Story.id == story_id_bytes).first()

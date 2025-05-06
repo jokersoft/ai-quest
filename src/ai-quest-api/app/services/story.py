@@ -3,13 +3,13 @@ import uuid
 
 from sqlalchemy.orm import Session
 
+from app.clients import llm_client
 from app.entities.message import Message as MessageEntity
 from app.entities.story import Story as StoryEntity
 from app.repositories.story import StoryRepository
 from app.repositories.message import MessageRepository
-from app.schemas.story import Story as StorySchema
+from app.schemas.story import FullStory as FullStorySchema
 from app.schemas.message import Message as MessageSchema
-from app.services.prompt_provider import PromptProvider
 
 logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging.getLogger(__name__)
@@ -20,35 +20,71 @@ class StoryService:
         self.db = db
         self._story_repository = StoryRepository(db)
         self._message_repository = MessageRepository(db)
-        self._prompt_provider = PromptProvider()
+        self._llm_client = llm_client.create_client()
 
-    def init_story(self) -> tuple[StorySchema, list[MessageSchema]]:
+    def get(self, story_id: uuid.UUID) -> FullStorySchema:
+        # Get story by ID
+        story_entity = self._story_repository.get(story_id.bytes)
+        if not story_entity:
+            raise ValueError(f"Story with ID {story_id} not found")
+
+        # Get messages for the story
+        message_entities = self._message_repository.get_messages_by_story_id(story_id.bytes)
+
+        # Convert Story to schema DTOs
+        story_messages = [
+            MessageSchema(
+                role=message.role,
+                content=message.content
+            ) for message in message_entities
+        ]
+
+        full_story = FullStorySchema(
+            id=str(uuid.UUID(bytes=story_entity.id)),
+            user_id=str(uuid.UUID(bytes=story_entity.user_id)),
+            messages=story_messages
+        )
+
+        return full_story
+
+    def init(self) -> FullStorySchema:
         # Story
         story_entity = StoryEntity(user_id=uuid.uuid4().bytes)
         saved_story = self._story_repository.add(story_entity)
         _LOGGER.debug(f"Story.id: {saved_story.id}")
         _LOGGER.info(f"Story created with ID: {saved_story.id}")
 
-        # Messages
-        system_prompt = self._prompt_provider.get("system")
-        messages_entities = [
-            MessageEntity(role="system", content=system_prompt, story_id=saved_story.id),
-            MessageEntity(role="user", content="Hello!", story_id=saved_story.id),
+        messages = [
+            {"role": "user", "content": "Hello!"},
         ]
-        for message in messages_entities:
-            # TODO: timestamp or sequence number
-            self._message_repository.add(message)
 
-        # Convert entities to schema DTOs
-        story_dto = StorySchema(
-            id=str(uuid.UUID(bytes=saved_story.id)),
-            user_id=str(uuid.UUID(bytes=saved_story.user_id))
-        )
-        messages_dtos = [
+        # Get one more message - response from the LLM
+        last_message = self._llm_client.send_messages(messages)
+        _LOGGER.debug(f"last_message: {last_message}")
+
+        messages.append({"role": "assistant", "content": last_message})
+
+        message_entities = []
+        for message in messages:
+            # TODO: timestamp or sequence number
+            message_entity = MessageEntity(
+                role=message.get("role"), content=message.get("content"), story_id=saved_story.id
+            )
+            self._message_repository.add(message_entity)
+            message_entities.append(message_entity)
+
+        # Convert Story to schema DTOs
+        story_messages = [
             MessageSchema(
                 role=message.role,
                 content=message.content
-            ) for message in messages_entities
+            ) for message in message_entities
         ]
 
-        return story_dto, messages_dtos
+        full_story = FullStorySchema(
+            id=str(uuid.UUID(bytes=saved_story.id)),
+            user_id=str(uuid.UUID(bytes=saved_story.user_id)),
+            messages=story_messages
+        )
+
+        return full_story

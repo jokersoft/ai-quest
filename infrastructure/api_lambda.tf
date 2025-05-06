@@ -8,11 +8,15 @@ resource "aws_lambda_function" "api_lambda" {
 
   environment {
     variables = {
+      # secrets
       DATABASE_URL = local.secrets["db-credentials"]
-      API_KEY = local.secrets["api-key"]
-      CONFIG       = data.aws_secretsmanager_secret_version.configs.secret_string
-      APP_VERSION  = var.image_tag
-      DEBUG        = 1
+      API_KEY      = local.secrets["api-key"]
+      ANTHROPIC_API_KEY = local.secrets["anthropic-api-key"]
+
+      # configs
+      CONFIG_NAME = "ai-quest"
+      APP_VERSION = var.image_tag
+      DEBUG       = 1
     }
   }
 
