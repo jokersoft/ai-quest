@@ -15,7 +15,7 @@ class LLMClient(ABC):
         pass
 
     @abstractmethod
-    def send_messages(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
+    def send_messages(self, messages: list[dict], tools: list[dict] | None = None) -> str:
         pass
 
 
@@ -66,7 +66,7 @@ class AnthropicClient(LLMClient):
 
         return response.content[0]
 
-    def send_messages(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
+    def send_messages(self, messages: list[dict], tools: list[dict] | None = None) -> str:
         try:
             response = self.client.messages.create(
                 max_tokens=self.max_tokens,

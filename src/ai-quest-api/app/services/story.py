@@ -66,7 +66,6 @@ class StoryService:
 
         message_entities = []
         for message in messages:
-            # TODO: timestamp or sequence number
             message_entity = MessageEntity(
                 role=message.get("role"), content=message.get("content"), story_id=saved_story.id
             )
@@ -84,6 +83,54 @@ class StoryService:
         full_story = FullStorySchema(
             id=str(uuid.UUID(bytes=saved_story.id)),
             user_id=str(uuid.UUID(bytes=saved_story.user_id)),
+            messages=story_messages
+        )
+
+        return full_story
+
+    def act(self, story_id: uuid.UUID, user_decision: str) -> FullStorySchema:
+        # Get existing story
+        story_entity = self._story_repository.get(story_id.bytes)
+        if not story_entity:
+            raise ValueError(f"Story with ID {story_id} not found")
+
+        # Get existing messages
+        message_entities = self._message_repository.get_messages_by_story_id(story_id.bytes)
+
+        # Add user message to the story
+        user_message_entity = MessageEntity(
+            role="user", content=user_decision, story_id=story_id.bytes
+        )
+        self._message_repository.add(user_message_entity)
+        message_entities.append(user_message_entity)
+
+        # Format messages for LLM
+        llm_messages = [
+            {"role": message.role, "content": message.content}
+            for message in message_entities
+        ]
+
+        # Get response from LLM
+        assistant_response = self._llm_client.send_messages(llm_messages)
+
+        # Add LLM response to the story
+        assistant_message_entity = MessageEntity(
+            role="assistant", content=assistant_response, story_id=story_id.bytes
+        )
+        self._message_repository.add(assistant_message_entity)
+        message_entities.append(assistant_message_entity)
+
+        # Convert to schema DTOs
+        story_messages = [
+            MessageSchema(
+                role=message.role,
+                content=message.content
+            ) for message in message_entities
+        ]
+
+        full_story = FullStorySchema(
+            id=str(uuid.UUID(bytes=story_entity.id)),
+            user_id=str(uuid.UUID(bytes=story_entity.user_id)),
             messages=story_messages
         )
 

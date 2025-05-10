@@ -9,6 +9,7 @@ from app.services import security
 from app.services.story import StoryService
 from app.schemas.story import FullStory
 from app.schemas.message import Message
+from app.schemas.user_decision import UserDecision
 
 app = fastapi.FastAPI()
 llm_client = llm_client.create_client()
@@ -37,9 +38,10 @@ def get(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)) ->
 
 
 @app.post("/story/{story_id}/act", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
-def act(story_id: uuid.UUID):
-    # TODO
-    raise NotImplemented()
+def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
+    story_service = StoryService(db)
+    return story_service.act(story_id, user_decision.message)
+
 
 # for AWS Lambda compatibility:
 handler = Mangum(app)

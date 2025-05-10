@@ -1,3 +1,5 @@
+from sqlalchemy import asc
+
 from app.entities.message import Message
 
 
@@ -14,4 +16,5 @@ class MessageRepository:
         return self.db_session.query(Message).filter(Message.id == message_id).first()
 
     def get_messages_by_story_id(self, story_id_bytes: bytes) -> list[Message]:
-        return self.db_session.query(Message).filter(Message.story_id == story_id_bytes).all()
+        return self.db_session.query(Message).filter(Message.story_id == story_id_bytes).order_by(
+            asc(Message.created_at)).all()
