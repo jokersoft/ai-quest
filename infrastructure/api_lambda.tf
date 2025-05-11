@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "api_lambda" {
-  image_uri     = "${data.aws_ecr_repository.navan_lm.repository_url}:${var.image_tag}"
+  image_uri     = "${data.aws_ecr_repository.api_lambda.repository_url}:${var.image_tag}"
   package_type  = "Image"
   function_name = "${var.name}-api-lambda"
   timeout       = 60

@@ -8,7 +8,6 @@ from app.clients import llm_client, db_client
 from app.services import security
 from app.services.story import StoryService
 from app.schemas.story import FullStory
-from app.schemas.message import Message
 from app.schemas.user_decision import UserDecision
 
 app = fastapi.FastAPI()

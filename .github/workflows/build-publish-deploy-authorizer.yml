@@ -1,4 +1,4 @@
-name: Build publish deploy API
+name: Build publish deploy Authorizer
 
 on:
   workflow_dispatch:
@@ -9,18 +9,18 @@ on:
   push:
     branches:
       - main
+      - lambda-authorizer
     paths:
-      - 'src/ai-quest-api/**'
+      - 'src/lambda-authorizer/**'
 
 env:
-  APP_NAME: ai-quest-api
-  APP_ENV: dev
-  AWS_ECR_REPOSITORY: ai-quest/api-lambda
+  APP_NAME: ai-quest-lambda-authorizer
+  AWS_ECR_REPOSITORY: ai-quest/lambda-authorizer
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
   AWS_ASSUME_ROLE_NAME: ai-quest-gha-role
   AWS_SECRET_ID: ai-quest
-  BUILD_FOLDER: ./src/ai-quest-api
+  BUILD_FOLDER: ./src/lambda-authorizer
 
 jobs:
   build-publish-deploy:
@@ -79,7 +79,7 @@ jobs:
 
       - name: Update ECS Task Definition
         run: |
-          cd infrastructure
+          cd infrastructure/authorizer
           terraform init
           terraform apply -auto-approve -var="image_tag=${{ github.event.inputs.version || env.version }}"  
 
