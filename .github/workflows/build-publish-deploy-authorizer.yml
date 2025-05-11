@@ -11,16 +11,16 @@ on:
       - main
       - lambda-authorizer
     paths:
-      - 'src/lambda-authorizer/**'
+      - 'src/authorizer-lambda/**'
+      - 'infrastructure/authorizer/**'
 
 env:
-  APP_NAME: ai-quest-lambda-authorizer
-  AWS_ECR_REPOSITORY: ai-quest/lambda-authorizer
+  AWS_ECR_REPOSITORY: ai-quest/authorizer-lambda
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
   AWS_ASSUME_ROLE_NAME: ai-quest-gha-role
   AWS_SECRET_ID: ai-quest
-  BUILD_FOLDER: ./src/lambda-authorizer
+  BUILD_FOLDER: ./src/authorizer-lambda
 
 jobs:
   build-publish-deploy:
@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set version for push to main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - run: git checkout ${{ github.event.inputs.version || env.version  }}
@@ -77,7 +77,7 @@ jobs:
         with:
           terraform_version: 1.10.5
 
-      - name: Update ECS Task Definition
+      - name: Update Infrastructure
         run: |
           cd infrastructure/authorizer
           terraform init

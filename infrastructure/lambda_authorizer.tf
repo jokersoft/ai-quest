@@ -1,8 +1,18 @@
+data "terraform_remote_state" "authorizer" {
+  backend = "s3"
+
+  config = {
+    region = "eu-central-1"
+    bucket = "state-storage"
+    key    = "apps/ai-quest/authorizer"
+  }
+}
+
 # API Gateway authorizer configuration
 resource "aws_api_gateway_authorizer" "google_authorizer" {
   name                   = "google-authorizer"
   rest_api_id            = aws_api_gateway_rest_api.lambda_api.id
-  authorizer_uri         = aws_lambda_function.google_authorizer.invoke_arn
+  authorizer_uri         = data.terraform_remote_state.authorizer.outputs.invoke_arn
   authorizer_credentials = aws_iam_role.api_gateway_authorizer_role.arn
   identity_source        = "method.request.header.Authorization"
   type                   = "TOKEN"
@@ -39,7 +49,7 @@ resource "aws_iam_role_policy" "api_gateway_invoke_policy" {
       {
         Action   = "lambda:InvokeFunction"
         Effect   = "Allow"
-        Resource = aws_lambda_function.google_authorizer.arn
+        Resource = data.terraform_remote_state.authorizer.outputs.arn
       }
     ]
   })
@@ -49,7 +59,7 @@ resource "aws_iam_role_policy" "api_gateway_invoke_policy" {
 resource "aws_lambda_permission" "api_gateway_authorizer" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.google_authorizer.function_name
+  function_name = data.terraform_remote_state.authorizer.outputs.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.lambda_api.execution_arn}/authorizers/${aws_api_gateway_authorizer.google_authorizer.id}"
 }
