@@ -4,8 +4,8 @@ resource "aws_lambda_function" "google_authorizer" {
   package_type  = "Image"
   image_uri     = "${data.aws_ecr_repository.authorizer_lambda.repository_url}:${var.image_tag}"
   role          = aws_iam_role.authorizer_role.arn
-  timeout       = 10
-  memory_size   = 128
+  timeout       = 30
+  memory_size   = 256
 
   environment {
     variables = {
@@ -39,3 +39,8 @@ resource "aws_iam_role_policy_attachment" "authorizer_role" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# Log group for the Lambda function
+resource "aws_cloudwatch_log_group" "google_authorizer_log_group" {
+  name              = "/aws/lambda/${var.name}-google-authorizer"
+  retention_in_days = 1
+}

@@ -56,3 +56,9 @@ resource "aws_lambda_function_url" "api_lambda" {
     max_age           = 86400
   }
 }
+
+# Log group for the Lambda function
+resource "aws_cloudwatch_log_group" "google_authorizer_log_group" {
+  name              = "/aws/lambda/${var.name}-api-lambda"
+  retention_in_days = 1
+}

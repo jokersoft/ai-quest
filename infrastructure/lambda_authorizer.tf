@@ -16,8 +16,8 @@ resource "aws_api_gateway_authorizer" "google_authorizer" {
   authorizer_credentials = aws_iam_role.api_gateway_authorizer_role.arn
   identity_source        = "method.request.header.Authorization"
   type                   = "TOKEN"
-  # Cache the authorization result for 300 seconds (5 minutes)
-  authorizer_result_ttl_in_seconds = 300
+  # TODO: set cache
+  authorizer_result_ttl_in_seconds = 0
 }
 
 # IAM role for API Gateway to invoke the authorizer Lambda
@@ -61,5 +61,5 @@ resource "aws_lambda_permission" "api_gateway_authorizer" {
   action        = "lambda:InvokeFunction"
   function_name = data.terraform_remote_state.authorizer.outputs.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.lambda_api.execution_arn}/authorizers/${aws_api_gateway_authorizer.google_authorizer.id}"
+  source_arn    = "${aws_api_gateway_rest_api.lambda_api.execution_arn}/*"
 }
