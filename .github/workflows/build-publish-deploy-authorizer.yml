@@ -1,4 +1,4 @@
-name: Build publish deploy API
+name: Build publish deploy Authorizer
 
 on:
   workflow_dispatch:
@@ -9,18 +9,18 @@ on:
   push:
     branches:
       - main
+      - lambda-authorizer
     paths:
-      - 'src/ai-quest-api/**'
+      - 'src/authorizer-lambda/**'
+      - 'infrastructure/authorizer/**'
 
 env:
-  APP_NAME: ai-quest-api
-  APP_ENV: dev
-  AWS_ECR_REPOSITORY: ai-quest/api-lambda
+  AWS_ECR_REPOSITORY: ai-quest/authorizer-lambda
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
   AWS_ASSUME_ROLE_NAME: ai-quest-gha-role
   AWS_SECRET_ID: ai-quest
-  BUILD_FOLDER: ./src/ai-quest-api
+  BUILD_FOLDER: ./src/authorizer-lambda
 
 jobs:
   build-publish-deploy:
@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set version for push to main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - run: git checkout ${{ github.event.inputs.version || env.version  }}
@@ -79,7 +79,7 @@ jobs:
 
       - name: Update Infrastructure
         run: |
-          cd infrastructure
+          cd infrastructure/authorizer
           terraform init
           terraform apply -auto-approve -var="image_tag=${{ github.event.inputs.version || env.version }}"  
 

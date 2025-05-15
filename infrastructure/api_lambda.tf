@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "api_lambda" {
-  image_uri     = "${data.aws_ecr_repository.navan_lm.repository_url}:${var.image_tag}"
+  image_uri     = "${data.aws_ecr_repository.api_lambda.repository_url}:${var.image_tag}"
   package_type  = "Image"
   function_name = "${var.name}-api-lambda"
   timeout       = 60
@@ -55,4 +55,10 @@ resource "aws_lambda_function_url" "api_lambda" {
     expose_headers = ["*"]
     max_age           = 86400
   }
+}
+
+# Log group for the Lambda function
+resource "aws_cloudwatch_log_group" "google_authorizer_log_group" {
+  name              = "/aws/lambda/${var.name}-api-lambda"
+  retention_in_days = 1
 }
