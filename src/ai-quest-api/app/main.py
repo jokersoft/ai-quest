@@ -1,6 +1,7 @@
 import uuid
 
 import fastapi
+from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from sqlalchemy.orm import Session
 
@@ -11,6 +12,14 @@ from app.schemas.story import FullStory
 from app.schemas.user_decision import UserDecision
 
 app = fastapi.FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # TODO: Configure this to your specific domains in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 llm_client = llm_client.create_client()
 
 @app.get("/health")

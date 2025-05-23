@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quest</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-center">AI Quest</h3>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Login Section -->
+                        <div id="loginSection" class="text-center">
+                            <h4>Please sign in with Google</h4>
+                            <div id="g_id_onload"
+                                 data-client_id="44639786367-9hph0j2ih57oc1a8pbo573jdm7nspsqo.apps.googleusercontent.com"
+                                 data-callback="handleCredentialResponse"
+                                 data-auto_prompt="false">
+                            </div>
+                            <div class="g_id_signin"
+                                 data-type="standard"
+                                 data-size="large"
+                                 data-theme="outline"
+                                 data-text="sign_in_with"
+                                 data-shape="rectangular"
+                                 data-logo_alignment="left">
+                            </div>
+                        </div>
+
+                        <!-- Authenticated Section -->
+                        <div id="authenticatedSection" style="display: none;">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="alert alert-success">
+                                        <strong>Welcome!</strong> <span id="userEmail"></span>
+                                        <button class="btn btn-sm btn-outline-secondary float-end" onclick="signOut()">Sign Out</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- API Test Forms -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>GET Request</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="getEndpoint" class="form-label">Endpoint</label>
+                                                <input type="text" class="form-control" id="getEndpoint"
+                                                       placeholder="/story/1" value="/story/1">
+                                            </div>
+                                            <button class="btn btn-primary" onclick="makeGetRequest()">Send GET Request</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>POST Request</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="postEndpoint" class="form-label">Endpoint</label>
+                                                <input type="text" class="form-control" id="postEndpoint"
+                                                       placeholder="/story/init" value="/story/init">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="postData" class="form-label">JSON Data</label>
+                                                <textarea class="form-control" id="postData" rows="3"
+                                                          placeholder='{"name": "John", "email": "john@example.com"}'></textarea>
+                                            </div>
+                                            <button class="btn btn-success" onclick="makePostRequest()">Send POST Request</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Response Section -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>API Response</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <pre id="responseOutput" class="bg-light p-3" style="max-height: 300px; overflow-y: auto;">
+No requests made yet...
+                                            </pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'https://dlr6vjko0a.execute-api.eu-central-1.amazonaws.com/dev';
+
+        // Global variables
+        let currentUser = null;
+        let idToken = null;
+
+        // Handle Google Sign-In response
+        function handleCredentialResponse(response) {
+            try {
+                // Decode the JWT token to get user info
+                const payload = JSON.parse(atob(response.credential.split('.')[1]));
+
+                currentUser = {
+                    email: payload.email,
+                    name: payload.name,
+                    picture: payload.picture
+                };
+
+                idToken = response.credential;
+
+                // Update UI
+                document.getElementById('userEmail').textContent = currentUser.email;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('authenticatedSection').style.display = 'block';
+
+                console.log('User signed in:', currentUser);
+            } catch (error) {
+                console.error('Error handling credential response:', error);
+                alert('Error signing in. Please try again.');
+            }
+        }
+
+        // Sign out function
+        function signOut() {
+            currentUser = null;
+            idToken = null;
+
+            // Reset UI
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('authenticatedSection').style.display = 'none';
+            document.getElementById('responseOutput').textContent = 'No requests made yet...';
+
+            // Sign out from Google
+            google.accounts.id.disableAutoSelect();
+            console.log('User signed out');
+        }
+
+        // Make authenticated GET request
+        async function makeGetRequest() {
+            const endpoint = document.getElementById('getEndpoint').value;
+
+            if (!endpoint) {
+                alert('Please enter an endpoint');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE_URL + endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${idToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                displayResponse({
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: data
+                });
+
+            } catch (error) {
+                displayResponse({
+                    error: error.message
+                });
+            }
+        }
+
+        // Make authenticated POST request
+        async function makePostRequest() {
+            const endpoint = document.getElementById('postEndpoint').value;
+            const postData = document.getElementById('postData').value;
+
+            if (!endpoint) {
+                alert('Please enter an endpoint');
+                return;
+            }
+
+            let requestBody = {};
+            if (postData) {
+                try {
+                    requestBody = JSON.parse(postData);
+                } catch (error) {
+                    alert('Invalid JSON data');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(API_BASE_URL + endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${idToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+                displayResponse({
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: data
+                });
+
+            } catch (error) {
+                displayResponse({
+                    error: error.message
+                });
+            }
+        }
+
+        // Display API response
+        function displayResponse(response) {
+            const output = document.getElementById('responseOutput');
+            output.textContent = JSON.stringify(response, null, 2);
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            console.log('Page loaded, Google Sign-In should be available');
+        });
+    </script>
+</body>
+</html>
