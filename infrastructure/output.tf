@@ -6,10 +6,6 @@ output "api_endpoint" {
   value = aws_api_gateway_stage.dev.invoke_url
 }
 
-output "rds_cluster_endpoint" {
-  value = aws_rds_cluster.aurora_cluster.endpoint
-}
-
-output "rds_cluster_reader_endpoint" {
-  value = aws_rds_cluster.aurora_cluster.reader_endpoint
+output "aws_security_group_id" {
+  value = aws_security_group.lambda_sg.id
 }

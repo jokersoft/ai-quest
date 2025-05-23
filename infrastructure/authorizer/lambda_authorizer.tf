@@ -5,7 +5,7 @@ resource "aws_lambda_function" "google_authorizer" {
   image_uri     = "${data.aws_ecr_repository.authorizer_lambda.repository_url}:${var.image_tag}"
   role          = aws_iam_role.authorizer_role.arn
   timeout       = 30
-  memory_size   = 256
+  memory_size   = 128
 
   environment {
     variables = {

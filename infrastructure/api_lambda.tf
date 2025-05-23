@@ -2,7 +2,7 @@ resource "aws_lambda_function" "api_lambda" {
   image_uri     = "${data.aws_ecr_repository.api_lambda.repository_url}:${var.image_tag}"
   package_type  = "Image"
   function_name = "${var.name}-api-lambda"
-  timeout       = 60
+  timeout       = 5
   role          = aws_iam_role.api_lambda.arn
   memory_size   = 1024
 
@@ -43,6 +43,7 @@ resource "aws_security_group" "lambda_sg" {
   }
 }
 
+# TODO: this or gateway?
 resource "aws_lambda_function_url" "api_lambda" {
   function_name      = aws_lambda_function.api_lambda.function_name
   authorization_type = "NONE"
