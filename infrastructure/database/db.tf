@@ -17,7 +17,7 @@ resource "aws_security_group" "aurora_sg" {
     to_port         = 3306
     protocol        = "tcp"
     cidr_blocks = var.is_db_public ? ["0.0.0.0/0"] : []  # Allow connections from any IP address
-    security_groups = var.is_db_public ? [] : [aws_security_group.lambda_sg.id] # restrict access to the Lambda security group
+    security_groups = var.is_db_public ? [] : [data.terraform_remote_state.app.outputs.aws_security_group_id] # restrict access to the Lambda security group
   }
 
   egress {

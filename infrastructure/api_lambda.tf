@@ -1,10 +1,10 @@
 resource "aws_lambda_function" "api_lambda" {
-  image_uri     = "${data.aws_ecr_repository.navan_lm.repository_url}:${var.image_tag}"
+  image_uri     = "${data.aws_ecr_repository.api_lambda.repository_url}:${var.image_tag}"
   package_type  = "Image"
   function_name = "${var.name}-api-lambda"
-  timeout       = 60
+  timeout       = 5
   role          = aws_iam_role.api_lambda.arn
-  memory_size   = 1024
+  memory_size   = 256
 
   environment {
     variables = {
@@ -14,6 +14,7 @@ resource "aws_lambda_function" "api_lambda" {
       ANTHROPIC_API_KEY = local.secrets["anthropic-api-key"]
 
       # configs
+      IS_API_KEY_AUTH_DISABLED = 1  # Using gateway auth instead
       CONFIG_NAME = "ai-quest"
       APP_VERSION = var.image_tag
       DEBUG       = 1
@@ -43,16 +44,23 @@ resource "aws_security_group" "lambda_sg" {
   }
 }
 
-resource "aws_lambda_function_url" "api_lambda" {
-  function_name      = aws_lambda_function.api_lambda.function_name
-  authorization_type = "NONE"
+# We can expose the Lambda function via an API Gateway or a Lambda Function URL.
+# resource "aws_lambda_function_url" "api_lambda" {
+#   function_name      = aws_lambda_function.api_lambda.function_name
+#   authorization_type = "NONE"
+#
+#   cors {
+#     allow_credentials = true
+#     allow_origins = ["*"]
+#     allow_methods = ["*"]
+#     allow_headers = ["*"]
+#     expose_headers = ["*"]
+#     max_age           = 86400
+#   }
+# }
 
-  cors {
-    allow_credentials = true
-    allow_origins = ["*"]
-    allow_methods = ["*"]
-    allow_headers = ["*"]
-    expose_headers = ["*"]
-    max_age           = 86400
-  }
+# Log group for the Lambda function
+resource "aws_cloudwatch_log_group" "google_authorizer_log_group" {
+  name              = "/aws/lambda/${var.name}-api-lambda"
+  retention_in_days = 1
 }
