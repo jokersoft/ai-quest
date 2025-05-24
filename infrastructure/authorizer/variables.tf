@@ -14,5 +14,5 @@ variable "image_tag" {
 variable "allowed_email_domains" {
   description = "List of allowed email domains"
   type        = list(string)
-  default     = ["example.com", "anotherdomain.com"]
+  default     = ["reliant.ai", "gmail.com"]
 }
