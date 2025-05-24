@@ -4,7 +4,7 @@ resource "aws_lambda_function" "api_lambda" {
   function_name = "${var.name}-api-lambda"
   timeout       = 5
   role          = aws_iam_role.api_lambda.arn
-  memory_size   = 1024
+  memory_size   = 256
 
   environment {
     variables = {
@@ -14,6 +14,7 @@ resource "aws_lambda_function" "api_lambda" {
       ANTHROPIC_API_KEY = local.secrets["anthropic-api-key"]
 
       # configs
+      IS_API_KEY_AUTH_DISABLED = 1  # Using gateway auth instead
       CONFIG_NAME = "ai-quest"
       APP_VERSION = var.image_tag
       DEBUG       = 1

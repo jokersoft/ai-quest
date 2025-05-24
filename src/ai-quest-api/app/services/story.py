@@ -11,8 +11,8 @@ from app.repositories.message import MessageRepository
 from app.schemas.story import FullStory as FullStorySchema
 from app.schemas.message import Message as MessageSchema
 
-logging.basicConfig(level=logging.DEBUG)
-_LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 
 class StoryService:
@@ -51,8 +51,8 @@ class StoryService:
         # Story
         story_entity = StoryEntity(user_id=uuid.uuid4().bytes)
         saved_story = self._story_repository.add(story_entity)
-        _LOGGER.debug(f"Story.id: {saved_story.id}")
-        _LOGGER.info(f"Story created with ID: {saved_story.id}")
+        logger.debug(f"Story.id: {saved_story.id}")
+        logger.info(f"Story created with ID: {saved_story.id}")
 
         messages = [
             {"role": "user", "content": "Hello!"},
@@ -60,7 +60,7 @@ class StoryService:
 
         # Get one more message - response from the LLM
         last_message = self._llm_client.send_messages(messages)
-        _LOGGER.debug(f"last_message: {last_message}")
+        logger.debug(f"last_message: {last_message}")
 
         messages.append({"role": "assistant", "content": last_message})
 
