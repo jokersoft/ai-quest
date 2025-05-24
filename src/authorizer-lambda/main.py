@@ -110,12 +110,12 @@ def handler(event, context):
 
     # Extract the token from the Authorization header
     try:
-        auth_header = event['headers'].get('Authorization') or event['headers'].get('authorization')
-        if not auth_header:
-            logger.error("No Authorization header found")
+        auth_token = event.get('authorizationToken')
+        if not auth_token:
+            logger.error("No Authorization token found")
             return generate_policy('user', 'Deny', event['methodArn'])
 
-        token = auth_header.split(' ')[1]  # Remove 'Bearer ' prefix
+        token = auth_token.split(' ')[1]  # Remove 'Bearer ' prefix
     except Exception as e:
         logger.error(f"Error extracting token: {str(e)}")
         return generate_policy('user', 'Deny', event['methodArn'])
