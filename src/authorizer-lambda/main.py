@@ -11,6 +11,7 @@ logger.setLevel(logging.INFO)
 # Environment variables
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 ALLOWED_DOMAINS = os.environ.get('ALLOWED_DOMAINS', '').split(',')
+ALLOWED_EMAILS = os.environ.get('ALLOWED_EMAILS', '').split(',')
 
 # Google's public keys URL
 GOOGLE_PUBLIC_KEYS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
@@ -74,11 +75,20 @@ def validate_token(token):
 def check_domain(email):
     """Check if the email domain is in the allowed domains list"""
     if not ALLOWED_DOMAINS or ALLOWED_DOMAINS[0] == '':
-        # If no domains are specified, allow all domains
+        # If no ALLOWED_DOMAINS are specified, allow all
         return True
 
     domain = email.split('@')[-1]
     return domain in ALLOWED_DOMAINS
+
+
+def check_email(email):
+    """Check if the email is in the allowed emails list"""
+    if not ALLOWED_EMAILS or ALLOWED_EMAILS[0] == '':
+        # If no ALLOWED_EMAILS are specified, allow all
+        return True
+
+    return email in ALLOWED_EMAILS
 
 
 def generate_policy(principal_id, effect, resource, context=None):
@@ -137,6 +147,7 @@ def handler(event, context):
         return generate_policy('user', 'Deny', event['methodArn'])
 
     # User is authenticated and authorized
+    logger.info(f"User {email} is authenticated and authorized")
     # Create a context with user information to pass to the API
     context = {
         'email': email,

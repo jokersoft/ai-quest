@@ -43,20 +43,20 @@ resource "aws_security_group" "lambda_sg" {
   }
 }
 
-# TODO: this or gateway?
-resource "aws_lambda_function_url" "api_lambda" {
-  function_name      = aws_lambda_function.api_lambda.function_name
-  authorization_type = "NONE"
-
-  cors {
-    allow_credentials = true
-    allow_origins = ["*"]
-    allow_methods = ["*"]
-    allow_headers = ["*"]
-    expose_headers = ["*"]
-    max_age           = 86400
-  }
-}
+# We can expose the Lambda function via an API Gateway or a Lambda Function URL.
+# resource "aws_lambda_function_url" "api_lambda" {
+#   function_name      = aws_lambda_function.api_lambda.function_name
+#   authorization_type = "NONE"
+#
+#   cors {
+#     allow_credentials = true
+#     allow_origins = ["*"]
+#     allow_methods = ["*"]
+#     allow_headers = ["*"]
+#     expose_headers = ["*"]
+#     max_age           = 86400
+#   }
+# }
 
 # Log group for the Lambda function
 resource "aws_cloudwatch_log_group" "google_authorizer_log_group" {
