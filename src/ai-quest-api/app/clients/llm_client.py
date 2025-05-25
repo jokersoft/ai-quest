@@ -36,7 +36,7 @@ class AnthropicClient(LLMClient):
         self.client = anthropic.Anthropic(
             api_key=config.anthropic_api_key,
             max_retries=0,
-            timeout=20.0,  # seconds
+            timeout=60.0,  # seconds
         )
         self.model = config.anthropic_model
         self.max_tokens = config.anthropic_max_tokens
