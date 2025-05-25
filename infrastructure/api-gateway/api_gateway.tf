@@ -18,9 +18,11 @@ resource "aws_api_gateway_deployment" "lambda_api" {
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_method.proxy_method.id,
+      aws_api_gateway_method.proxy_options_method.id,
       aws_api_gateway_method.root_proxy_method.id,
       aws_api_gateway_method.health_method.id,
       aws_api_gateway_integration.lambda_integration.id,
+      aws_api_gateway_integration.proxy_options_integration.id,
       aws_api_gateway_integration.root_proxy_integration.id,
       aws_api_gateway_integration.health_integration.id,
       aws_api_gateway_authorizer.google_authorizer.id,
@@ -52,7 +54,7 @@ resource "aws_api_gateway_integration" "root_proxy_integration" {
   http_method             = aws_api_gateway_method.root_proxy_method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.api_lambda.invoke_arn
+  uri                     = data.terraform_remote_state.quest_api.outputs.invoke_arn
   content_handling        = "CONVERT_TO_TEXT"
 }
 
@@ -76,7 +78,7 @@ resource "aws_api_gateway_integration" "health_integration" {
   http_method             = aws_api_gateway_method.health_method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.api_lambda.invoke_arn
+  uri                     = data.terraform_remote_state.quest_api.outputs.invoke_arn
 }
 
 # ANY (non-root)
@@ -105,7 +107,7 @@ resource "aws_api_gateway_integration" "lambda_integration" {
   http_method             = aws_api_gateway_method.proxy_method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.api_lambda.invoke_arn
+  uri                     = data.terraform_remote_state.quest_api.outputs.invoke_arn
   cache_key_parameters    = [
     "method.request.path.proxy",
   ]
@@ -116,7 +118,7 @@ resource "aws_api_gateway_integration" "lambda_integration" {
 resource "aws_lambda_permission" "apigw" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api_lambda.function_name
+  function_name = data.terraform_remote_state.quest_api.outputs.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.lambda_api.execution_arn}/*/*"
 }

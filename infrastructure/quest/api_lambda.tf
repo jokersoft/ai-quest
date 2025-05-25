@@ -2,7 +2,7 @@ resource "aws_lambda_function" "api_lambda" {
   image_uri     = "${data.aws_ecr_repository.api_lambda.repository_url}:${var.image_tag}"
   package_type  = "Image"
   function_name = "${var.name}-api-lambda"
-  timeout       = 5
+  timeout       = 30
   role          = aws_iam_role.api_lambda.arn
   memory_size   = 256
 
@@ -61,6 +61,6 @@ resource "aws_security_group" "lambda_sg" {
 
 # Log group for the Lambda function
 resource "aws_cloudwatch_log_group" "google_authorizer_log_group" {
-  name              = "/aws/lambda/${var.name}-api-lambda"
+  name              = "/aws/lambda/${var.name}"
   retention_in_days = 1
 }

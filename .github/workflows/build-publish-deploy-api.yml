@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'src/ai-quest-api/**'
+      - 'infrastructure/quest/**'
 
 env:
   APP_NAME: ai-quest-api
@@ -79,7 +80,7 @@ jobs:
 
       - name: Update Infrastructure
         run: |
-          cd infrastructure
+          cd infrastructure/quest
           terraform init
           terraform apply -auto-approve -var="image_tag=${{ github.event.inputs.version || env.version }}"  
 

@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     region = "eu-central-1"
     bucket = "state-storage"
-    key    = "apps/ai-quest"
+    key    = "quest"
   }
 
   required_providers {
