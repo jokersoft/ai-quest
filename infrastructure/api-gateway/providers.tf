@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     region = "eu-central-1"
     bucket = "state-storage"
-    key    = "api-gateway"
+    key    = "quest/api-gateway.json"
   }
 
   required_providers {

@@ -11,10 +11,9 @@ on:
       - main
     paths:
       - 'src/ai-quest-api/**'
-      - 'infrastructure/quest/**'
+      - 'infrastructure/api/**'
 
 env:
-  APP_NAME: ai-quest-api
   APP_ENV: dev
   AWS_ECR_REPOSITORY: ai-quest/api-lambda
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
@@ -80,7 +79,7 @@ jobs:
 
       - name: Update Infrastructure
         run: |
-          cd infrastructure/quest
+          cd infrastructure/api
           terraform init
           terraform apply -auto-approve -var="image_tag=${{ github.event.inputs.version || env.version }}"  
 

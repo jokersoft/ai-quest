@@ -4,6 +4,6 @@ data "terraform_remote_state" "app" {
   config = {
     region = "eu-central-1"
     bucket = "state-storage"
-    key    = "quest"
+    key    = "quest/api.json"
   }
 }

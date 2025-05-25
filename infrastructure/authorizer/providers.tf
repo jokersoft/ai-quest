@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     region = "eu-central-1"
     bucket = "state-storage"
-    key    = "apps/ai-quest/authorizer" # TODO: rename
+    key    = "quest/authorizer.json"
   }
 
   required_providers {
