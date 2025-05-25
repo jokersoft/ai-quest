@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
+import socket
 
 import anthropic
 from app.clients import config
@@ -7,6 +8,13 @@ from app.services.prompt_provider import PromptProvider
 
 _LOGGER = logging.getLogger(__name__)
 config = config.Config()
+
+
+# Force IPv4 only (aws lambda fix for "connect_tcp.failed exception=ConnectError(OSError(97, 'Address family not supported by protocol'))")
+old_getaddrinfo = socket.getaddrinfo
+def new_getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
+    return old_getaddrinfo(host, port, socket.AF_INET, socktype, proto, flags)
+socket.getaddrinfo = new_getaddrinfo
 
 
 class LLMClient(ABC):
