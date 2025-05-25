@@ -23,10 +23,11 @@ resource "aws_lambda_function" "api_lambda" {
     }
   }
 
-  vpc_config {
-    subnet_ids = data.aws_subnets.default.ids
-    security_group_ids = [aws_security_group.lambda_sg.id]
-  }
+  # When you add vpc_config to a Lambda function, it loses default internet access - like Anthropic API.
+  # vpc_config {
+  #   subnet_ids = data.aws_subnets.default.ids
+  #   security_group_ids = [aws_security_group.lambda_sg.id]
+  # }
 
   depends_on = [
     aws_iam_role_policy_attachment.api_lambda,
