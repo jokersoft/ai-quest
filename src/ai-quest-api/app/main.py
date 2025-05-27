@@ -12,6 +12,8 @@ from app.services.story import StoryService
 from app.schemas.story import FullStory
 from app.schemas.user_decision import UserDecision
 
+API_GATEWAY_BASE_PATH = "/quest"
+
 app = fastapi.FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -60,4 +62,4 @@ def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.
 
 
 # for AWS Lambda compatibility:
-handler = Mangum(app)
+handler = Mangum(app, api_gateway_base_path=API_GATEWAY_BASE_PATH)

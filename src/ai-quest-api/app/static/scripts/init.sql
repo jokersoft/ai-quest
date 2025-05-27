@@ -12,6 +12,7 @@ CREATE TABLE messages (
                           role VARCHAR(50) NOT NULL,
                           content TEXT NOT NULL,
                           story_id BINARY(16),
+                          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE
 );
 

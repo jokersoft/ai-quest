@@ -51,8 +51,9 @@ class StoryService:
         # Story
         story_entity = StoryEntity(user_id=uuid.uuid4().bytes)
         saved_story = self._story_repository.add(story_entity)
-        logger.debug(f"Story.id: {saved_story.id}")
-        logger.info(f"Story created with ID: {saved_story.id}")
+        story_id_uuid = uuid.UUID(bytes=saved_story.id)
+        logger.debug(f"Story.id: {story_id_uuid}")
+        logger.info(f"Story created with ID: {story_id_uuid}")
 
         messages = [
             {"role": "user", "content": "Hello!"},

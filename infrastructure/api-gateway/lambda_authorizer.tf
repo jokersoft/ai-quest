@@ -4,7 +4,7 @@ data "terraform_remote_state" "authorizer" {
   config = {
     region = "eu-central-1"
     bucket = "state-storage"
-    key    = "apps/ai-quest/authorizer"
+    key    = "quest/authorizer.json"
   }
 }
 

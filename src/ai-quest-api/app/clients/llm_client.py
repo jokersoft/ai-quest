@@ -28,7 +28,7 @@ class AnthropicClient(LLMClient):
         self.client = anthropic.Anthropic(
             api_key=config.anthropic_api_key,
             max_retries=0,
-            timeout=20.0,  # seconds
+            timeout=60.0,  # seconds
         )
         self.model = config.anthropic_model
         self.max_tokens = config.anthropic_max_tokens
@@ -60,9 +60,6 @@ class AnthropicClient(LLMClient):
         except Exception as e:
             _LOGGER.exception("An unexpected error occurred", e.__cause__)
             raise e
-
-        _LOGGER.warning("anthropic.response")
-        _LOGGER.warning(response)
 
         return response.content[0]
 

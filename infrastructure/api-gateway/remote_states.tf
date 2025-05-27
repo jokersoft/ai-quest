@@ -1,4 +1,4 @@
-data "terraform_remote_state" "app" {
+data "terraform_remote_state" "quest_api" {
   backend = "s3"
 
   config = {
