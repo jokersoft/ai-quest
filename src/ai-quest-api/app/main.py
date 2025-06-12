@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.clients import llm_client, db_client
 from app.services import security
+from app.services import user
 from app.services.story import StoryService
 from app.schemas.story import FullStory
 from app.schemas.user_decision import UserDecision
@@ -28,6 +29,7 @@ logger.setLevel(logging.DEBUG)
 
 llm_client = llm_client.create_client()
 
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
@@ -37,6 +39,12 @@ def health_check():
 def ask(question: str):
     response = llm_client.ask(question)
     return {"response": response}
+
+
+@app.get("/stories", dependencies=[fastapi.Depends(security.verify_api_key)])
+def stories(user_info: user.UserInfo = fastapi.Depends(user.get_user_info)):
+    logger.info(f"User {user_info.email} requesting stories.")
+    return {"email": user_info.email, "picture": user_info.picture, "name": user_info.name}
 
 
 @app.post("/story/init", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
