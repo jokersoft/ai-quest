@@ -10,7 +10,7 @@ from app.clients import llm_client, db_client
 from app.services import security
 from app.services import user
 from app.services.story import StoryService
-from app.schemas.story import FullStory
+from app.schemas.story import Story, FullStory
 from app.schemas.user_decision import UserDecision
 
 API_GATEWAY_BASE_PATH = "/quest"
@@ -42,15 +42,22 @@ def ask(question: str):
 
 
 @app.get("/stories", dependencies=[fastapi.Depends(security.verify_api_key)])
-def stories(user_info: user.UserInfo = fastapi.Depends(user.get_user_info)):
+def stories(
+    user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
+    db: Session = fastapi.Depends(db_client.get_db)
+) -> list[Story]:
     logger.info(f"User {user_info.email} requesting stories.")
-    return {"email": user_info.email, "picture": user_info.picture, "name": user_info.name}
+    stories = StoryService(db).list(user_info)
+    return stories
 
 
 @app.post("/story/init", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
-def init(db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
+def init(
+    user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
+    db: Session = fastapi.Depends(db_client.get_db)
+) -> FullStory:
     story_service = StoryService(db)
-    new_story = story_service.init()
+    new_story = story_service.init(user_info)
     logger.info(f"New Story {new_story.id} created")
     return new_story
 

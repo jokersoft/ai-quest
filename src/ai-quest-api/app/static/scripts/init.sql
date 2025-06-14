@@ -11,6 +11,7 @@ CREATE INDEX idx_email ON users(email);
 
 CREATE TABLE stories (
                         id BINARY(16) PRIMARY KEY,
+                        title VARCHAR(256) DEFAULT NULL,
                         user_id BINARY(16) NOT NULL
 );
 

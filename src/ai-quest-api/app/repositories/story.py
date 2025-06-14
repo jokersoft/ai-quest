@@ -19,3 +19,10 @@ class StoryRepository:
 
     def get(self, story_id_bytes: bytes) -> Story:
         return self.db_session.query(Story).filter(Story.id == story_id_bytes).first()
+
+    def list_by_user_id(self, user_id_bytes: bytes) -> list[Story]:
+        return (
+            self.db_session.query(Story)
+            .filter(Story.user_id == user_id_bytes)
+            .all()
+        )
