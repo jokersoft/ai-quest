@@ -11,10 +11,11 @@ class UserRepository:
 
     def add(self, user: User) -> User:
         self.db_session.add(user)
-        _LOGGER.info(f"Inserted a new user: {user.get_id()}")
-
         self.db_session.commit()
         self.db_session.refresh(user)
+
+        _LOGGER.info(f"Inserted a new user: {user.get_id()}")
+
         return user
 
     def get(self, user_id_bytes: bytes) -> User:
