@@ -50,7 +50,7 @@ class StoryService:
 
     def init(self, user_info: UserInfo) -> FullStorySchema:
         # Story
-        story_entity = StoryEntity(user_id=uuid.uuid4().bytes)
+        story_entity = StoryEntity(user_id=user_info.user_id.bytes)
         saved_story = self._story_repository.add(story_entity)
         story_id_uuid = uuid.UUID(bytes=saved_story.id)
         logger.debug(f"Story.id: {story_id_uuid}")
