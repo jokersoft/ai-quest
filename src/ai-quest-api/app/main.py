@@ -46,7 +46,7 @@ def stories(
     user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
     db: Session = fastapi.Depends(db_client.get_db)
 ) -> list[Story]:
-    logger.info(f"User {user_info.email} requesting stories.")
+    logger.debug(f"User {user_info.email} requesting stories.")
     stories = StoryService(db).list(user_info)
     return stories
 
@@ -58,7 +58,7 @@ def init(
 ) -> FullStory:
     story_service = StoryService(db)
     new_story = story_service.init(user_info)
-    logger.info(f"New Story {new_story.id} created")
+    logger.debug(f"New Story {new_story.id} created")
     return new_story
 
 
