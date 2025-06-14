@@ -62,7 +62,7 @@ def get_user_info(request: Request) -> UserInfo:
             picture = authorizer_context.get('picture', None)
 
             logger.info(f"User authenticated: {email}")
-            return UserInfo(email=email, name=name, picture=picture, id=user.get_id())
+            return UserInfo(email=email, name=name, picture=picture, user_id=user.get_id())
         else:
             logger.error("No AWS event context found")
             raise HTTPException(status_code=401, detail="Authentication context not found")
