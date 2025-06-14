@@ -8,7 +8,8 @@ from app.entities.message import Message as MessageEntity
 from app.entities.story import Story as StoryEntity
 from app.repositories.story import StoryRepository
 from app.repositories.message import MessageRepository
-from app.schemas.story import FullStory as FullStorySchema
+from app.services.user import UserInfo
+from app.schemas.story import Story as StorySchema, FullStory as FullStorySchema
 from app.schemas.message import Message as MessageSchema
 
 logger = logging.getLogger()
@@ -47,9 +48,9 @@ class StoryService:
 
         return full_story
 
-    def init(self) -> FullStorySchema:
+    def init(self, user_info: UserInfo) -> FullStorySchema:
         # Story
-        story_entity = StoryEntity(user_id=uuid.uuid4().bytes)
+        story_entity = StoryEntity(user_id=user_info.user_id.bytes)
         saved_story = self._story_repository.add(story_entity)
         story_id_uuid = uuid.UUID(bytes=saved_story.id)
         logger.debug(f"Story.id: {story_id_uuid}")
@@ -64,6 +65,10 @@ class StoryService:
         logger.debug(f"last_message: {last_message}")
 
         messages.append({"role": "assistant", "content": last_message})
+
+        # Update story title
+        story_title = last_message[:256]
+        self._story_repository.update_title(saved_story.id, story_title)
 
         message_entities = []
         for message in messages:
@@ -83,11 +88,26 @@ class StoryService:
 
         full_story = FullStorySchema(
             id=str(uuid.UUID(bytes=saved_story.id)),
-            user_id=str(uuid.UUID(bytes=saved_story.user_id)),
+            user_id=str(user_info.user_id),
+            title=story_title,
             messages=story_messages
         )
 
         return full_story
+
+    def list(self, user_info: UserInfo) -> list[StorySchema]:
+        # Fetch stories for the user
+        story_entities = self._story_repository.list_by_user_id(user_info.user_id.bytes)
+        # Convert to schema DTOs
+        stories = [
+            StorySchema(
+                id=str(uuid.UUID(bytes=story.id)),
+                user_id=str(uuid.UUID(bytes=story.user_id)),
+                title=story.title
+            )
+            for story in story_entities
+        ]
+        return stories
 
     def act(self, story_id: uuid.UUID, user_decision: str) -> FullStorySchema:
         # Get existing story

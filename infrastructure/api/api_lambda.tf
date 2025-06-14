@@ -16,6 +16,7 @@ resource "aws_lambda_function" "api_lambda" {
       # configs
       IS_API_KEY_AUTH_DISABLED = 1  # Using gateway auth instead
       CONFIG_NAME             = "ai-quest"
+      APP_ENV                 = var.app_env
       APP_VERSION             = var.image_tag
       DEBUG                   = 1
       HTTPX_LOG_LEVEL         = "WARNING"

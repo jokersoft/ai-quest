@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from app.entities.story import Story
 
@@ -19,3 +20,26 @@ class StoryRepository:
 
     def get(self, story_id_bytes: bytes) -> Story:
         return self.db_session.query(Story).filter(Story.id == story_id_bytes).first()
+
+    def update_title(self, story_id_bytes: bytes, title: str) -> Story:
+        story_id_str = str(uuid.UUID(bytes=story_id_bytes))
+
+        existing_story = self.get(story_id_bytes)
+        if not existing_story:
+            raise ValueError(f"Story with ID {story_id_str} not found")
+
+        existing_story.title = title
+
+        self.db_session.commit()
+        self.db_session.refresh(existing_story)
+
+        _LOGGER.info(f"Updated story title for: {story_id_str}")
+
+        return existing_story
+
+    def list_by_user_id(self, user_id_bytes: bytes) -> list[Story]:
+        return (
+            self.db_session.query(Story)
+            .filter(Story.user_id == user_id_bytes)
+            .all()
+        )
