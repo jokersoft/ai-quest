@@ -66,6 +66,10 @@ class StoryService:
 
         messages.append({"role": "assistant", "content": last_message})
 
+        # Update story title
+        story_title = last_message[:256]
+        self._story_repository.update_title(saved_story.id, story_title)
+
         message_entities = []
         for message in messages:
             message_entity = MessageEntity(
@@ -85,7 +89,7 @@ class StoryService:
         full_story = FullStorySchema(
             id=str(uuid.UUID(bytes=saved_story.id)),
             user_id=str(user_info.user_id),
-            title=last_message[:256],
+            title=story_title,
             messages=story_messages
         )
 
