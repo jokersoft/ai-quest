@@ -76,11 +76,14 @@ def get_or_create_user_by_email(email: str) -> User:
     """
     Retrieve a user by email.
     """
-    with db_client.get_db() as db:
+    db = db_client.get_db()
+    try:
         user_repository = UserRepository(db)
         user = user_repository.get_by_email(email)
         if not user:
             logger.warning(f"User with email {email} not found, creating...")
             user = user_repository.add(User(email=email))
+        return user
+    finally:
+        db.close()
 
-    return user
