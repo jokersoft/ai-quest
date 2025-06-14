@@ -10,3 +10,7 @@ variable "image_tag" {
   type    = string
   default = "latest"
 }
+
+variable "app_env" {
+  type    = string
+}

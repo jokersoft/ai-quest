@@ -10,6 +10,7 @@ TODO
   - actions
   - situations
 - vectorise story abstractions
+- quick actions (proposed by LLM)
 
 
 Story data model:
