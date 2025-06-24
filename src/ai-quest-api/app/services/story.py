@@ -122,6 +122,7 @@ class StoryService:
         user_message_entity = MessageEntity(
             role="user", content=user_decision, story_id=story_id.bytes
         )
+        message_entities.append(user_message_entity)
 
         # Format messages for LLM
         llm_messages = [
@@ -140,12 +141,11 @@ class StoryService:
         assistant_message_entity = MessageEntity(
             role="assistant", content=assistant_response, story_id=story_id.bytes
         )
+        message_entities.append(assistant_message_entity)
 
         # Save when we have both messages
         self._message_repository.add(user_message_entity)
-        message_entities.append(user_message_entity)
         self._message_repository.add(assistant_message_entity)
-        message_entities.append(assistant_message_entity)
 
         # Convert to schema DTOs
         story_messages = [
