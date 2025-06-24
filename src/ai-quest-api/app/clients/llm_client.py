@@ -65,7 +65,6 @@ class AnthropicClient(LLMClient):
 
     def send_messages(self, messages: list[dict], tools: list[dict] | None = None) -> str:
         try:
-            _LOGGER.warning(f"debug Anthropic: {messages}")
             response = self.client.messages.create(
                 max_tokens=self.max_tokens,
                 messages=messages,
