@@ -122,8 +122,6 @@ class StoryService:
         user_message_entity = MessageEntity(
             role="user", content=user_decision, story_id=story_id.bytes
         )
-        self._message_repository.add(user_message_entity)
-        message_entities.append(user_message_entity)
 
         # Format messages for LLM
         llm_messages = [
@@ -132,12 +130,20 @@ class StoryService:
         ]
 
         # Get response from LLM
-        assistant_response = self._llm_client.send_messages(llm_messages)
+        try:
+            assistant_response = self._llm_client.send_messages(llm_messages)
+        except Exception as e:
+            logger.error(f"Error while getting response from LLM: {e}")
+            raise RuntimeError("Failed to get response from the Dungeon Master. Please try again later.")
 
         # Add LLM response to the story
         assistant_message_entity = MessageEntity(
             role="assistant", content=assistant_response, story_id=story_id.bytes
         )
+
+        # Save when we have both messages
+        self._message_repository.add(user_message_entity)
+        message_entities.append(user_message_entity)
         self._message_repository.add(assistant_message_entity)
         message_entities.append(assistant_message_entity)
 
