@@ -469,13 +469,13 @@
             document.getElementById('newStoryBtn').disabled = true;
 
             try {
-                const response = await apiCall('POST', '/stories/init');
+                const response = await apiCall('POST', '/story/init');
                 await loadStories();
 
                 // Select the new story
-                document.getElementById('storySelect').value = response.data.id;
-                currentStoryId = response.data.id;
-                displayStory(response.data);
+                document.getElementById('storySelect').value = response.id;
+                currentStoryId = response.id;
+                displayStory(response);
                 document.getElementById('sendActionBtn').disabled = false;
             } catch (error) {
                 console.error('Failed to create story:', error);
