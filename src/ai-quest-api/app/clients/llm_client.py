@@ -72,16 +72,16 @@ class AnthropicClient(LLMClient):
                 system=self.system_prompt,
             )
         except anthropic.APIConnectionError as e:
-            _LOGGER.exception("The server could not be reached", e.__cause__)
+            _LOGGER.exception("The server could not be reached", exc_info=True)
             raise e
         except anthropic.RateLimitError as e:
-            _LOGGER.exception("The rate limit was exceeded", e.__cause__)
+            _LOGGER.exception("The rate limit was exceeded", exc_info=True)
             raise e
         except anthropic.APIStatusError as e:
-            _LOGGER.exception("The API returned an error", e.__cause__)
+            _LOGGER.exception("The API returned an error", exc_info=True)
             raise e
         except Exception as e:
-            _LOGGER.exception("An unexpected error occurred", e.__cause__)
+            _LOGGER.exception("An unexpected error occurred", exc_info=True)
             raise e
 
         return response.content[0].text
