@@ -62,7 +62,7 @@ FullStory response structure:
   "data": {
     "id": "b9412ca2-d092-4843-a619-253fd38dc394",
     "user_id": "e60dfbbd-1b54-4823-99ad-7c02c32d74d7",
-    "title": "*The world around you is a desolate wasteland, once a thriving metropolis now reduced to rubble and ruin. The air is thick with the scent of ozone and decay. You stand at the edge of what was once a highway, now cracked and overgrown with strange, luminesc",
+    "title": "Intro to the story",
     "messages": [
       {
         "role": "user",
@@ -70,7 +70,7 @@ FullStory response structure:
       },
       {
         "role": "assistant",
-        "content": "*The world around you is a desolate wasteland, once a thriving metropolis now reduced to rubble and ruin. The air is thick with the scent of ozone and decay. You stand at the edge of what was once a highway, now cracked and overgrown with strange, luminescent fungi.*\n\nAh, another wanderer in this forsaken hellscape. How... delightful. I'm sure you'll last longer than the last one. Maybe even a whole day.\n\n**Situation:**\nYou notice a faint glow coming from beneath an overturned bus about fifty meters ahead. Beside you is a rusted shopping cart containing a few meager supplies: a half-empty water bottle, a knife with a chipped blade, and a curious amulet that occasionally pulses with a dull blue light.\n\n**Choice:**\n- Investigate the glow beneath the bus\n- Examine the amulet more closely\n- Take the supplies and head in the opposite direction of the bus\n- Try to climb to higher ground for a better view of your surroundings\n\nWhat's your action, survivor?"
+        "content": "message N"
       }
     ]
   }
