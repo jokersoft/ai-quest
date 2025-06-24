@@ -76,5 +76,12 @@ def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.
     return story_service.act(story_id, user_decision.message)
 
 
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: fastapi.Request, e: Exception):
+    return fastapi.responses.JSONResponse(
+        status_code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": str(e)},
+    )
+
 # for AWS Lambda compatibility:
 handler = Mangum(app, api_gateway_base_path=API_GATEWAY_BASE_PATH)
