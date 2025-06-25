@@ -122,7 +122,7 @@ class StoryService:
         user_message_entity = MessageEntity(
             role="user", content=user_decision, story_id=story_id.bytes
         )
-        # message_entities.append(user_message_entity)
+        message_entities.append(user_message_entity)
 
         # Format messages for LLM
         llm_messages = [
