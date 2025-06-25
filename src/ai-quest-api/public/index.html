@@ -333,18 +333,27 @@
                 options.body = JSON.stringify(data);
             }
 
+            let response, result;
             try {
-                const response = await fetch(url, options);
-                const result = await response.json();
+                response = await fetch(url, options);
+                const text = await response.text();
+                try {
+                    result = JSON.parse(text);
+                } catch {
+                    result = text;
+                }
                 logDebug(method, endpoint, data, result, !response.ok);
 
                 if (!response.ok) {
-                    throw new Error(result.message || 'API request failed');
+                    // Always throw the API's message if present
+                    const message = result && result.message ? result.message : (typeof result === 'string' ? result : null);
+                    throw new Error(message || 'API request failed');
                 }
-
+        
                 return result;
             } catch (error) {
-                logDebug(method, endpoint, data, { error: error.message }, true);
+                // Log the last result if available, else the error
+                logDebug(method, endpoint, data, result ? result : { error: error.message }, true);
                 throw error;
             }
         }
@@ -453,7 +462,7 @@
                 displayStory(response);
             } catch (error) {
                 console.error('Failed to send action:', error);
-                alert('Failed to send action');
+                alert(error.message || 'Failed to send action');
             } finally {
                 isLoading = false;
                 document.getElementById('sendActionBtn').disabled = false;
