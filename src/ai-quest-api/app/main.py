@@ -82,6 +82,12 @@ async def generic_exception_handler(request: fastapi.Request, e: Exception):
     return fastapi.responses.JSONResponse(
         status_code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"message": str(e)},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
     )
 
 # for AWS Lambda compatibility:

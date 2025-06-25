@@ -318,7 +318,32 @@
             debugLog.insertBefore(entry, debugLog.firstChild);
         }
 
-        // API helper
+        // Standardized error handling
+        function showError(error, fallbackMessage) {
+            // Debug logging
+            console.log('showError called with:', {
+                error: error,
+                apiMessage: error?.apiMessage,
+                message: error?.message,
+                fallbackMessage: fallbackMessage
+            });
+
+            // Extract the most appropriate error message
+            let message = fallbackMessage;
+
+            if (error && error.apiMessage) {
+                // If we've explicitly set an API message
+                message = error.apiMessage;
+            } else if (error && error.message) {
+                // If it's a standard Error object with a message
+                message = error.message;
+            }
+
+            console.log('Final message to show:', message);
+            alert(message);
+        }
+
+        // Enhanced API helper with better error handling
         async function apiCall(method, endpoint, data = null) {
             const url = `${API_BASE_URL}${endpoint}`;
             const options = {
@@ -333,29 +358,52 @@
                 options.body = JSON.stringify(data);
             }
 
-            let response, result;
+            let response;
             try {
                 response = await fetch(url, options);
-                const text = await response.text();
-                try {
-                    result = JSON.parse(text);
-                } catch {
-                    result = text;
-                }
-                logDebug(method, endpoint, data, result, !response.ok);
-
-                if (!response.ok) {
-                    // Always throw the API's message if present
-                    const message = result && result.message ? result.message : (typeof result === 'string' ? result : null);
-                    throw new Error(message || 'API request failed');
-                }
-        
-                return result;
+                console.log('Fetch succeeded, status:', response.status);
             } catch (error) {
-                // Log the last result if available, else the error
-                logDebug(method, endpoint, data, result ? result : { error: error.message }, true);
+                // Network error - fetch failed
+                console.log('Network error caught:', error);
+                logDebug(method, endpoint, data, { error: error.message }, true);
+                const netError = new Error('Network error - please check your connection and try again');
+                netError.apiMessage = 'Network error - please check your connection and try again';
+                throw netError;
+            }
+
+            // We have a response, parse it
+            let result;
+            const text = await response.text();
+            try {
+                result = JSON.parse(text);
+            } catch {
+                result = text;
+            }
+
+            console.log('Response parsed, ok:', response.ok, 'result:', result);
+            logDebug(method, endpoint, data, result, !response.ok);
+
+            // Check if the response is an error
+            if (!response.ok) {
+                const error = new Error('API request failed');
+
+                // Always try to use the API's error message
+                if (result && typeof result === 'object' && result.message) {
+                    error.apiMessage = result.message;
+                    console.log('Setting apiMessage from result.message:', result.message);
+                } else if (typeof result === 'string' && result) {
+                    error.apiMessage = result;
+                    console.log('Setting apiMessage from string result:', result);
+                } else {
+                    error.apiMessage = `Request failed with status ${response.status}`;
+                    console.log('Setting generic apiMessage for status:', response.status);
+                }
+
+                console.log('About to throw error with apiMessage:', error.apiMessage);
                 throw error;
             }
+
+            return result;
         }
 
         // Google Sign-In
@@ -401,6 +449,7 @@
                 });
             } catch (error) {
                 console.error('Failed to load stories:', error);
+                showError(error, 'Failed to load stories');
             }
         }
 
@@ -413,11 +462,11 @@
             try {
                 const response = await apiCall('GET', `/story/${storyId}`);
                 currentStoryId = storyId;
-                displayStory(response); // <-- Fix here
+                displayStory(response);
                 document.getElementById('sendActionBtn').disabled = false;
             } catch (error) {
                 console.error('Failed to load story:', error);
-                alert('Failed to load story');
+                showError(error, 'Failed to load story');
             } finally {
                 isLoading = false;
             }
@@ -462,7 +511,7 @@
                 displayStory(response);
             } catch (error) {
                 console.error('Failed to send action:', error);
-                alert(error.message || 'Failed to send action');
+                showError(error, 'Failed to send action');
             } finally {
                 isLoading = false;
                 document.getElementById('sendActionBtn').disabled = false;
@@ -488,7 +537,7 @@
                 document.getElementById('sendActionBtn').disabled = false;
             } catch (error) {
                 console.error('Failed to create story:', error);
-                alert('Failed to create new story');
+                showError(error, 'Failed to create new story');
             } finally {
                 isLoading = false;
                 document.getElementById('newStoryBtn').disabled = false;
