@@ -27,3 +27,4 @@ TODO
 
 # IDEAS
 - management simulation game
+- generate book from your adventures

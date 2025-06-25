@@ -1,8 +1,4 @@
-- init API endpoint
-  - story init
-- UserId
-- action API endpoint
-  - story upsert
+- remember login
 - json format
 
 - FE (try Vertex AI)
