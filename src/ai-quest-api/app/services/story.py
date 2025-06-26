@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import uuid
@@ -63,7 +64,7 @@ class StoryService:
 
         # Get one more message - response from the LLM
         last_message = self._dm.send_messages(messages)
-        last_message = json.dumps(last_message)  # TODO: use DTO
+        last_message = last_message.to_string()  # TODO: use DTO
         logger.debug(f"last_message: {last_message}")
 
         messages.append({"role": "assistant", "content": last_message})
@@ -122,7 +123,10 @@ class StoryService:
 
         # Add user message to the story
         user_message_entity = MessageEntity(
-            role="user", content=user_decision, story_id=story_id.bytes
+            role="user",
+            content=user_decision,
+            story_id=story_id.bytes,
+            created_at=datetime.datetime.now(datetime.UTC),
         )
         message_entities.append(user_message_entity)
 
@@ -134,11 +138,14 @@ class StoryService:
 
         # Get response from LLM
         assistant_response = self._dm.send_messages(messages)
-        assistant_response = json.dumps(assistant_response)  # TODO: use DTO
+        assistant_response = assistant_response.to_string()  # TODO: use DTO
 
         # Add LLM response to the story
         assistant_message_entity = MessageEntity(
-            role="assistant", content=assistant_response, story_id=story_id.bytes
+            role="assistant",
+            content=assistant_response,
+            story_id=story_id.bytes,
+            created_at = datetime.datetime.now(datetime.UTC),
         )
         message_entities.append(assistant_message_entity)
 
