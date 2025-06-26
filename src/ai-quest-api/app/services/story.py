@@ -1,13 +1,14 @@
+import json
 import logging
 import uuid
 
 from sqlalchemy.orm import Session
 
-from app.clients import llm_client
 from app.entities.message import Message as MessageEntity
 from app.entities.story import Story as StoryEntity
 from app.repositories.story import StoryRepository
 from app.repositories.message import MessageRepository
+from app.services import dm
 from app.services.user import UserInfo
 from app.schemas.story import Story as StorySchema, FullStory as FullStorySchema
 from app.schemas.message import Message as MessageSchema
@@ -19,9 +20,9 @@ logger.setLevel(logging.DEBUG)
 class StoryService:
     def __init__(self, db: Session):
         self.db = db
+        self._dm = dm.DungeonMaster()
         self._story_repository = StoryRepository(db)
         self._message_repository = MessageRepository(db)
-        self._llm_client = llm_client.create_client()
 
     def get(self, story_id: uuid.UUID) -> FullStorySchema:
         # Get story by ID
@@ -61,7 +62,8 @@ class StoryService:
         ]
 
         # Get one more message - response from the LLM
-        last_message = self._llm_client.send_messages(messages)
+        last_message = self._dm.send_messages(messages)
+        last_message = json.dumps(last_message)  # TODO: use DTO
         logger.debug(f"last_message: {last_message}")
 
         messages.append({"role": "assistant", "content": last_message})
@@ -125,17 +127,14 @@ class StoryService:
         message_entities.append(user_message_entity)
 
         # Format messages for LLM
-        llm_messages = [
+        messages = [
             {"role": message.role, "content": message.content}
             for message in message_entities
         ]
 
         # Get response from LLM
-        try:
-            assistant_response = self._llm_client.send_messages(llm_messages)
-        except Exception as e:
-            logger.error(f"Error while getting response from LLM: {e}")
-            raise RuntimeError("Failed to get response from the Dungeon Master. Please try again later.")
+        assistant_response = self._dm.send_messages(messages)
+        assistant_response = json.dumps(assistant_response)  # TODO: use DTO
 
         # Add LLM response to the story
         assistant_message_entity = MessageEntity(

@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+import json
 import logging
 
 import anthropic
 from app.clients import config
 from app.services.prompt_provider import PromptProvider
 
-_LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 config = config.Config()
 
 
@@ -15,7 +16,7 @@ class LLMClient(ABC):
         pass
 
     @abstractmethod
-    def send_messages(self, messages: list[dict], tools: list[dict] | None = None) -> str:
+    def send_messages(self, messages: list[dict], tools: list[dict] = None, tool_choice: dict = None) -> str:
         pass
 
 
@@ -79,45 +80,57 @@ class AnthropicClient(LLMClient):
                 system=self.system_prompt,
             )
         except anthropic.APIConnectionError as e:
-            _LOGGER.exception("The server could not be reached", e.__cause__)
+            logger.exception("The server could not be reached", e.__cause__)
             raise e
         except anthropic.RateLimitError as e:
-            _LOGGER.exception("The rate limit was exceeded", e.__cause__)
+            logger.exception("The rate limit was exceeded", e.__cause__)
             raise e
         except anthropic.APIStatusError as e:
-            _LOGGER.exception("The API returned an error", e.__cause__)
+            logger.exception("The API returned an error", e.__cause__)
             raise e
         except Exception as e:
-            _LOGGER.exception("An unexpected error occurred", e.__cause__)
+            logger.exception("An unexpected error occurred", e.__cause__)
             raise e
 
         return response.content[0]
 
-    def send_messages(self, messages: list[dict], tools: list[dict] | None = None) -> str:
+    def send_messages(self, messages: list[dict], tools: list[dict] = None, tool_choice: dict = None) -> str:
         try:
+            if tools is None:
+                tools = anthropic.NotGiven()
+            if tool_choice is None:
+                tool_choice = anthropic.NotGiven()
+
             # https://docs.anthropic.com/en/api/client-sdks
             response = self.client.messages.create(
                 max_tokens=self.max_tokens,
                 messages=messages,
                 model=self.model,
                 system=self.system_prompt,
-                tools=[self.story_response_tool],
-                tool_choice={"type": "tool", "name": "story_response"}
+                tools=tools,
+                tool_choice=tool_choice
             )
+
+            # Extract the tool use response
+            for content in response.content:
+                if content.type == "tool_use":
+                    return json.dumps(content.input)
+
+            # Fallback if no tool use (shouldn't happen with tool_choice)
+            return response.content[0].text
+
         except anthropic.APIConnectionError as e:
-            _LOGGER.exception("The server could not be reached", exc_info=True)
+            logger.exception("The server could not be reached", exc_info=True)
             raise e
         except anthropic.RateLimitError as e:
-            _LOGGER.exception("The rate limit was exceeded", exc_info=True)
+            logger.exception("The rate limit was exceeded", exc_info=True)
             raise e
         except anthropic.APIStatusError as e:
-            _LOGGER.exception("The API returned an error", exc_info=True)
+            logger.exception("The API returned an error", exc_info=True)
             raise e
         except Exception as e:
-            _LOGGER.exception("An unexpected error occurred", exc_info=True)
+            logger.exception("An unexpected error occurred", exc_info=True)
             raise e
-
-        return response.content[0].text
 
 
 def create_client() -> LLMClient:
