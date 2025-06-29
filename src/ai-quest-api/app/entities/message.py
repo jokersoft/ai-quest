@@ -15,7 +15,7 @@ class Message(Base):
     content = Column(Text, nullable=False)
     story_id = Column(BINARY(16), nullable=False, index=True)
     created_at = Column(
-        DATETIME(fsp=6),
+        DATETIME,
         default=datetime.datetime.now(datetime.UTC),
         nullable=False
     )
