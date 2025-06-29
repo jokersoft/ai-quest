@@ -11,3 +11,4 @@ class Story(BaseModel):
 
 class FullStory(Story):
     messages: list[message.Message]
+    choices: list[str]
