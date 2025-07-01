@@ -1,7 +1,6 @@
 import datetime
 import logging
 import uuid
-from random import choices
 
 from sqlalchemy.orm import Session
 
