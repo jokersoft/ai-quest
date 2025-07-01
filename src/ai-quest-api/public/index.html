@@ -106,36 +106,78 @@
             color: #fff;
         }
 
-        .messages {
+        .chapters {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 25px;
         }
 
-        .message {
-            padding: 12px 16px;
+        .chapter {
+            padding: 20px;
             border-radius: 8px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .message.assistant {
             background-color: #2d3748;
-            align-self: flex-start;
             border: 1px solid #4a5568;
         }
 
-        .message.user {
-            background-color: #2b6cb0;
-            align-self: flex-end;
-            margin-left: auto;
+        .chapter-number {
+            font-size: 14px;
+            color: #3182ce;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
         }
 
-        .message-role {
+        .chapter-section {
+            margin-bottom: 15px;
+        }
+
+        .section-label {
             font-size: 12px;
             opacity: 0.7;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
             text-transform: uppercase;
+            color: #9ca3af;
+        }
+
+        .narration {
+            font-style: italic;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .situation {
+            background-color: #1a202c;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #3182ce;
+            line-height: 1.6;
+        }
+
+        .choices-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .choice-item {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background-color: #2a3441;
+            border-radius: 4px;
+            border-left: 3px solid #4a5568;
+        }
+
+        .action {
+            background-color: #2b6cb0;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .outcome {
+            background-color: #2c5282;
+            padding: 12px;
+            border-radius: 6px;
+            line-height: 1.6;
         }
 
         .action-container {
@@ -480,12 +522,52 @@
                 html += `<div class="story-title">${story.title}</div>`;
             }
 
-            html += '<div class="messages">';
-            story.messages.forEach(message => {
+            html += '<div class="chapters">';
+
+            // Sort chapters by number to ensure correct order
+            const sortedChapters = [...(story.chapters || [])].sort((a, b) => a.number - b.number);
+
+            sortedChapters.forEach(chapter => {
                 html += `
-                    <div class="message ${message.role}">
-                        <div class="message-role">${message.role}</div>
-                        <div>${message.content.replace(/\n/g, '<br>')}</div>
+                    <div class="chapter">
+                        <div class="chapter-number">Chapter ${chapter.number}</div>
+
+                        ${chapter.narration ? `
+                            <div class="chapter-section">
+                                <div class="section-label">Narration</div>
+                                <div class="narration">${chapter.narration.replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
+
+                        ${chapter.situation ? `
+                            <div class="chapter-section">
+                                <div class="section-label">Situation</div>
+                                <div class="situation">${chapter.situation.replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
+
+                        ${chapter.choices && chapter.choices.length > 0 ? `
+                            <div class="chapter-section">
+                                <div class="section-label">Choices Presented</div>
+                                <ul class="choices-list">
+                                    ${chapter.choices.map(choice => `<li class="choice-item">${choice}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${chapter.action ? `
+                            <div class="chapter-section">
+                                <div class="section-label">Your Action</div>
+                                <div class="action">${chapter.action.replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
+
+                        ${chapter.outcome ? `
+                            <div class="chapter-section">
+                                <div class="section-label">Outcome</div>
+                                <div class="outcome">${chapter.outcome.replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });

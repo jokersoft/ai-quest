@@ -12,8 +12,7 @@ from app.repositories.story import StoryRepository
 from app.repositories.message import MessageRepository
 from app.services import dm
 from app.services.user import UserInfo
-from app.schemas.story import Story as StorySchema, FullStory as FullStorySchema
-from app.schemas.message import Message as MessageSchema
+from app.schemas.story import Story as StoryResponse, FullStory as FullStoryResponse
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -27,32 +26,22 @@ class StoryService:
         self._message_repository = MessageRepository(db)
         self._chapter_repository = ChapterRepository(db)
 
-    def get(self, story_id: uuid.UUID) -> FullStorySchema:
+    def get(self, story_id: uuid.UUID) -> FullStoryResponse:
         # Get story by ID
         story_entity = self._story_repository.get(story_id.bytes)
         if not story_entity:
             raise ValueError(f"Story with ID {story_id} not found")
 
-        # Get messages for the story
-        message_entities = self._message_repository.get_messages_by_story_id(story_id.bytes)
-
-        # Convert Story to schema DTOs
-        story_messages = [
-            MessageSchema(
-                role=message.role,
-                content=message.content
-            ) for message in message_entities
-        ]
-
-        full_story = FullStorySchema(
+        # Convert to response DTOs
+        full_story = FullStoryResponse(
             id=str(uuid.UUID(bytes=story_entity.id)),
             user_id=str(uuid.UUID(bytes=story_entity.user_id)),
-            messages=story_messages
+            chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
         )
 
         return full_story
 
-    def init(self, user_info: UserInfo) -> FullStorySchema:
+    def init(self, user_info: UserInfo) -> FullStoryResponse:
         # Story init
         story_entity = StoryEntity(user_id=user_info.user_id.bytes)
         saved_story = self._story_repository.add(story_entity)
@@ -94,31 +83,22 @@ class StoryService:
             self._message_repository.add(message_entity)
             message_entities.append(message_entity)
 
-        # Convert Story to schema DTOs
-        story_messages = [
-            MessageSchema(
-                role=message.role,
-                content=message.content
-            ) for message in message_entities
-        ]
-
-        # Create FullStory schema for response
-        full_story = FullStorySchema(
+        # Convert to response DTOs
+        full_story = FullStoryResponse(
             id=str(uuid.UUID(bytes=saved_story.id)),
             user_id=str(user_info.user_id),
             title=story_title,
-            messages=story_messages,
-            choices=dm_intro_message.choices,
+            chapters=self._chapter_repository.get_chapters_by_story_id(saved_story.id),
         )
 
         return full_story
 
-    def list(self, user_info: UserInfo) -> list[StorySchema]:
+    def list(self, user_info: UserInfo) -> list[StoryResponse]:
         # Fetch stories for the user
         story_entities = self._story_repository.list_by_user_id(user_info.user_id.bytes)
         # Convert to schema DTOs
         stories = [
-            StorySchema(
+            StoryResponse(
                 id=str(uuid.UUID(bytes=story.id)),
                 user_id=str(uuid.UUID(bytes=story.user_id)),
                 title=story.title
@@ -127,7 +107,7 @@ class StoryService:
         ]
         return stories
 
-    def act(self, story_id: uuid.UUID, user_decision: str) -> FullStorySchema:
+    def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
         # Get existing story
         story_entity = self._story_repository.get(story_id.bytes)
         if not story_entity:
@@ -183,19 +163,11 @@ class StoryService:
         self._message_repository.add(user_message_entity)
         self._message_repository.add(assistant_message_entity)
 
-        # Convert to schema DTOs
-        story_messages = [
-            MessageSchema(
-                role=message.role,
-                content=message.content
-            ) for message in message_entities
-        ]
-
-        full_story = FullStorySchema(
+        # Convert to response DTOs
+        full_story = FullStoryResponse(
             id=str(uuid.UUID(bytes=story_entity.id)),
             user_id=str(uuid.UUID(bytes=story_entity.user_id)),
-            messages=story_messages,
-            choices=assistant_response.choices
+            chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
         )
 
         return full_story

@@ -1,5 +1,18 @@
 from pydantic import BaseModel
-from app.schemas import message
+
+
+class Chapter(BaseModel):
+    id: str
+    narration: str
+    situation: str
+    choices: list[str]
+    action: str
+    outcome: str
+    number: int
+
+    class Config:
+        from_attributes = True
+
 
 class Story(BaseModel):
     id: str
@@ -9,6 +22,6 @@ class Story(BaseModel):
     class Config:
         from_attributes = True
 
+
 class FullStory(Story):
-    messages: list[message.Message]
-    choices: list[str]
+    chapters: list[Chapter]
