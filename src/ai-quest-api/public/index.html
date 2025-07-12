@@ -459,6 +459,15 @@
 
         // Google Sign-In
         function handleCredentialResponse(response) {
+            // Add a visual loading indicator in the story container during initial load
+            document.getElementById('storyContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="loading"></div>
+                    <p style="margin-top: 20px;">Loading your stories...</p>
+                </div>
+            `;
+
+            // Store the auth token
             authToken = response.credential;
             document.getElementById('authContainer').style.display = 'none';
             document.querySelector('.container').style.display = 'flex';
@@ -469,6 +478,10 @@
                 <span>${payload.name}</span>
                 <button class="btn" onclick="signOut()">Sign Out</button>
             `;
+
+            // Disable UI initially
+            setUILoadingState(true, 'Loading stories...');
+            document.getElementById('deleteStoryBtn').style.display = 'none';
 
             loadStories();
         }
@@ -483,6 +496,8 @@
 
         // Story management
         async function loadStories() {
+            setUILoadingState(true, 'Loading stories...');
+
             try {
                 const response = await apiCall('GET', '/stories');
                 const stories = Array.isArray(response) ? response : (response.data || []);
@@ -501,6 +516,16 @@
             } catch (error) {
                 console.error('Failed to load stories:', error);
                 showError(error, 'Failed to load stories');
+            } finally {
+                setUILoadingState(false);
+                // Ensure delete button stays hidden if no story is selected
+                if (!currentStoryId) {
+                    document.getElementById('storyContent').innerHTML = `
+                        <div class="empty-state">
+                            Select a story from the dropdown or create a new one to begin your adventure.
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -702,6 +727,33 @@
         document.getElementById('newStoryBtn').addEventListener('click', createNewStory);
 
         document.getElementById('deleteStoryBtn').addEventListener('click', deleteStory);
+
+        // Loading state management
+        function setUILoadingState(loading, message = null) {
+            isLoading = loading;
+
+            // List of all interactive elements
+            const elements = [
+                'storySelect',
+                'newStoryBtn',
+                'deleteStoryBtn',
+                'sendActionBtn',
+                'actionInput'
+            ];
+
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.disabled = loading;
+                }
+            });
+
+            // Show loading message in dropdown if provided
+            if (message && loading) {
+                const select = document.getElementById('storySelect');
+                select.innerHTML = `<option value="">${message}</option>`;
+            }
+        }
 
         // Initialize Google Sign-In
         window.onload = function () {
