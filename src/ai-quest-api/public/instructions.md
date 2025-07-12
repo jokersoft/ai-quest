@@ -1,4 +1,4 @@
-I am creating a thin FE app for my backend API (AI Quest).
+I am creating a thin FE app for my backend API (Text RPG).
 
 
 I want to have a few sections:
