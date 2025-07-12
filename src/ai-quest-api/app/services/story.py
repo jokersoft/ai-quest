@@ -34,8 +34,8 @@ class StoryService:
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
-            id=str(uuid.UUID(bytes=story_entity.id)),
-            user_id=str(uuid.UUID(bytes=story_entity.user_id)),
+            id=story_entity.id,
+            user_id=story_entity.user_id,
             chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
         )
 
@@ -85,8 +85,8 @@ class StoryService:
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
-            id=str(uuid.UUID(bytes=saved_story.id)),
-            user_id=str(user_info.user_id),
+            id=saved_story.id,
+            user_id=user_info.user_id,
             title=story_title,
             chapters=self._chapter_repository.get_chapters_by_story_id(saved_story.id),
         )
@@ -99,8 +99,8 @@ class StoryService:
         # Convert to schema DTOs
         stories = [
             StoryResponse(
-                id=str(uuid.UUID(bytes=story.id)),
-                user_id=str(uuid.UUID(bytes=story.user_id)),
+                id=story.id,
+                user_id=story.user_id,
                 title=story.title
             )
             for story in story_entities
@@ -165,8 +165,8 @@ class StoryService:
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
-            id=str(uuid.UUID(bytes=story_entity.id)),
-            user_id=str(uuid.UUID(bytes=story_entity.user_id)),
+            id=story_entity.id,
+            user_id=story_entity.user_id,
             chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
         )
 

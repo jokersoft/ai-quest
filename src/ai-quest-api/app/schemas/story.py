@@ -1,9 +1,10 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
+from typing import Union
 import uuid
 
 
 class Chapter(BaseModel):
-    id: str
+    id: Union[str, bytes, uuid.UUID] = Field(alias='id')
     narration: str
     situation: str
     choices: list[str]
@@ -12,9 +13,11 @@ class Chapter(BaseModel):
     number: int
 
     @field_validator('id', mode='before')
-    def convert_id(cls, v):
+    def convert_id(cls, v: Union[bytes, uuid.UUID, str]) -> str:
         if isinstance(v, bytes):
             return str(uuid.UUID(bytes=v))
+        if isinstance(v, uuid.UUID):
+            return str(v)
         return v
 
     class Config:
@@ -22,9 +25,17 @@ class Chapter(BaseModel):
 
 
 class Story(BaseModel):
-    id: str
-    user_id: str
+    id: Union[str, bytes, uuid.UUID] = Field(alias='id')
+    user_id: Union[str, bytes, uuid.UUID] = Field(alias='user_id')
     title: str | None = None
+
+    @field_validator('id', 'user_id', mode='before')
+    def convert_id(cls, v: Union[bytes, uuid.UUID, str]) -> str:
+        if isinstance(v, bytes):
+            return str(uuid.UUID(bytes=v))
+        if isinstance(v, uuid.UUID):
+            return str(v)
+        return v
 
     class Config:
         from_attributes = True
