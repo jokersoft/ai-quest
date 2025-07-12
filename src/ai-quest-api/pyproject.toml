@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "app"
-version = "0.0.2"
+version = "0.0.3"
 description = "AI Quest API"
 authors = ["jokersoft"]
 
@@ -14,3 +14,6 @@ anthropic = "^0.52.0"
 sqlalchemy = "^2.0.40"
 pymysql = "^1.1.1"
 boto3 = "^1.38.8"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4"
