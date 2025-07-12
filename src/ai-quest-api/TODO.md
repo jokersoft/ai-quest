@@ -2,8 +2,6 @@ TODO
 ====
 
 - minimal UI to function
-  - delete story & related data
-  - save and auto-refresh auth token
   - pagination for the FullStory
 - basic test
   - see git_hooks folder
