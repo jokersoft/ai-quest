@@ -81,6 +81,14 @@
             background-color: #4192de;
         }
 
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
         .main-content {
             flex: 1;
             display: flex;
@@ -305,6 +313,7 @@
                 <select id="storySelect">
                     <option value="">Select a story...</option>
                 </select>
+                <button id="deleteStoryBtn" class="btn btn-danger" style="display: none;">Delete Story</button>
                 <button id="newStoryBtn" class="btn btn-primary">New Story</button>
             </div>
             <div id="userInfo"></div>
@@ -498,6 +507,9 @@
         async function loadStory(storyId) {
             if (!storyId || isLoading) return;
 
+            // Show delete button when a story is selected
+            document.getElementById('deleteStoryBtn').style.display = storyId ? 'inline-block' : 'none';
+
             isLoading = true;
             document.getElementById('sendActionBtn').disabled = true;
 
@@ -626,9 +638,56 @@
             }
         }
 
+        async function deleteStory() {
+            if (!currentStoryId || isLoading) return;
+
+            const confirmed = confirm('Are you sure you want to delete this story? This action cannot be undone.');
+            if (!confirmed) return;
+
+            isLoading = true;
+            document.getElementById('deleteStoryBtn').disabled = true;
+
+            try {
+                await apiCall('DELETE', `/stories/${currentStoryId}`);
+
+                // Clear current story
+                currentStoryId = null;
+                document.getElementById('storyContent').innerHTML = `
+                    <div class="empty-state">
+                        Select a story from the dropdown or create a new one to begin your adventure.
+                    </div>
+                `;
+                document.getElementById('sendActionBtn').disabled = true;
+                document.getElementById('deleteStoryBtn').style.display = 'none';
+
+                // Reload stories and reset dropdown
+                await loadStories();
+                document.getElementById('storySelect').value = '';
+
+            } catch (error) {
+                console.error('Failed to delete story:', error);
+                showError(error, 'Failed to delete story');
+            } finally {
+                isLoading = false;
+                document.getElementById('deleteStoryBtn').disabled = false;
+            }
+        }
+
         // Event listeners
         document.getElementById('storySelect').addEventListener('change', (e) => {
-            loadStory(e.target.value);
+            if (!e.target.value) {
+                // Hide delete button when no story is selected
+                document.getElementById('deleteStoryBtn').style.display = 'none';
+                currentStoryId = null;
+                document.getElementById('storyContent').innerHTML = `
+                    <div class="empty-state">
+                        Select a story from the dropdown or create a new one to begin your adventure.
+                    </div>
+                `;
+                document.getElementById('sendActionBtn').disabled = true;
+            } else {
+                loadStory(e.target.value);
+            }
         });
 
         document.getElementById('sendActionBtn').addEventListener('click', sendAction);
@@ -641,6 +700,8 @@
         });
 
         document.getElementById('newStoryBtn').addEventListener('click', createNewStory);
+
+        document.getElementById('deleteStoryBtn').addEventListener('click', deleteStory);
 
         // Initialize Google Sign-In
         window.onload = function () {
