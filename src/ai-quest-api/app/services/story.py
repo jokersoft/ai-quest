@@ -58,7 +58,7 @@ class StoryService:
         new_chapter = ChapterEntity(
             narration=dm_intro_message.narration,
             situation=dm_intro_message.situation,
-            choices=[INITIAL_USER_MESSAGE],
+            choices=dm_intro_message.choices,
             action=INITIAL_USER_MESSAGE,
             outcome=dm_intro_message.outcome,
             number=1,

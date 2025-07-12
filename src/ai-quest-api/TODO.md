@@ -1,14 +1,12 @@
 TODO
 ====
 
-- minimal UI to function
-  - pagination for the FullStory
-- basic test
-  - see git_hooks folder
+- basic actual test
 - Implement long term memory
   - https://www.philschmid.de/gemini-with-memory
-- quick actions (proposed by LLM)
-
+- pagination
+  - "or meaningful window"
+  - wait until we hit limits or produce costs
 
 Story data model:
 - short summary (mutable)
