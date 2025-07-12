@@ -5,9 +5,9 @@ mkdir git_hooks
 cat << EOF > git_hooks/pre-commit
 #!/bin/sh
 
-if git diff --cached --name-only | grep -q "src/ai-quest-api-lambda"
+if git diff --cached --name-only | grep -q "src/ai-quest-api"
 then
-    cd src/ai-quest-api-lambda
+    cd src/ai-quest-api
     pytest
     if [ $? -ne 0 ]
     then

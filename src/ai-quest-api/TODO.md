@@ -2,14 +2,13 @@ TODO
 ====
 
 - minimal UI to function
-  - list stories
   - delete story & related data
   - pagination for the FullStory
 - basic test
-- record story abstractions
-  - actions
-  - situations
-- vectorise story abstractions
+  - see git_hooks folder
+- fix 1st Chapter choices
+- Implement long term memory
+  - https://www.philschmid.de/gemini-with-memory
 - quick actions (proposed by LLM)
 
 
