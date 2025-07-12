@@ -17,6 +17,7 @@ from app.schemas.story import Story as StoryResponse, FullStory as FullStoryResp
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+INITIAL_USER_MESSAGE = "Wake up!"  # Initial message to start the story
 
 class StoryService:
     def __init__(self, db: Session):
@@ -50,16 +51,15 @@ class StoryService:
         logger.info(f"Story created with ID: {story_id_uuid}")
 
         # Get intro message from the LLM
-        initial_user_message = "Hello!"
-        messages = [{"role": "user", "content": initial_user_message}]
+        messages = [{"role": "user", "content": INITIAL_USER_MESSAGE}]
         dm_intro_message = self._dm.send_messages(messages)
 
         # Record the 1st chapter
         new_chapter = ChapterEntity(
             narration=dm_intro_message.narration,
             situation=dm_intro_message.situation,
-            choices=dm_intro_message.choices,
-            action=initial_user_message,
+            choices=[INITIAL_USER_MESSAGE],
+            action=INITIAL_USER_MESSAGE,
             outcome=dm_intro_message.outcome,
             number=1,
             story_id=saved_story.id
