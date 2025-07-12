@@ -81,6 +81,14 @@
             background-color: #4192de;
         }
 
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
         .main-content {
             flex: 1;
             display: flex;
@@ -305,6 +313,7 @@
                 <select id="storySelect">
                     <option value="">Select a story...</option>
                 </select>
+                <button id="deleteStoryBtn" class="btn btn-danger" style="display: none;">Delete Story</button>
                 <button id="newStoryBtn" class="btn btn-primary">New Story</button>
             </div>
             <div id="userInfo"></div>
@@ -450,6 +459,15 @@
 
         // Google Sign-In
         function handleCredentialResponse(response) {
+            // Add a visual loading indicator in the story container during initial load
+            document.getElementById('storyContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="loading"></div>
+                    <p style="margin-top: 20px;">Loading your stories...</p>
+                </div>
+            `;
+
+            // Store the auth token
             authToken = response.credential;
             document.getElementById('authContainer').style.display = 'none';
             document.querySelector('.container').style.display = 'flex';
@@ -460,6 +478,10 @@
                 <span>${payload.name}</span>
                 <button class="btn" onclick="signOut()">Sign Out</button>
             `;
+
+            // Disable UI initially
+            setUILoadingState(true, 'Loading stories...');
+            document.getElementById('deleteStoryBtn').style.display = 'none';
 
             loadStories();
         }
@@ -474,6 +496,8 @@
 
         // Story management
         async function loadStories() {
+            setUILoadingState(true, 'Loading stories...');
+
             try {
                 const response = await apiCall('GET', '/stories');
                 const stories = Array.isArray(response) ? response : (response.data || []);
@@ -492,17 +516,30 @@
             } catch (error) {
                 console.error('Failed to load stories:', error);
                 showError(error, 'Failed to load stories');
+            } finally {
+                setUILoadingState(false);
+                // Ensure delete button stays hidden if no story is selected
+                if (!currentStoryId) {
+                    document.getElementById('storyContent').innerHTML = `
+                        <div class="empty-state">
+                            Select a story from the dropdown or create a new one to begin your adventure.
+                        </div>
+                    `;
+                }
             }
         }
 
         async function loadStory(storyId) {
             if (!storyId || isLoading) return;
 
+            // Show delete button when a story is selected
+            document.getElementById('deleteStoryBtn').style.display = storyId ? 'inline-block' : 'none';
+
             isLoading = true;
             document.getElementById('sendActionBtn').disabled = true;
 
             try {
-                const response = await apiCall('GET', `/story/${storyId}`);
+                const response = await apiCall('GET', `/stories/${storyId}`);
                 currentStoryId = storyId;
                 displayStory(response);
                 document.getElementById('sendActionBtn').disabled = false;
@@ -588,7 +625,7 @@
             input.disabled = true;
 
             try {
-                const response = await apiCall('POST', `/story/${currentStoryId}/act`, { message: action });
+                const response = await apiCall('POST', `/stories/${currentStoryId}/act`, { message: action });
                 input.value = '';
                 displayStory(response);
             } catch (error) {
@@ -609,7 +646,7 @@
             document.getElementById('newStoryBtn').disabled = true;
 
             try {
-                const response = await apiCall('POST', '/story/init');
+                const response = await apiCall('POST', '/stories/init');
                 await loadStories();
 
                 // Select the new story
@@ -626,9 +663,56 @@
             }
         }
 
+        async function deleteStory() {
+            if (!currentStoryId || isLoading) return;
+
+            const confirmed = confirm('Are you sure you want to delete this story? This action cannot be undone.');
+            if (!confirmed) return;
+
+            isLoading = true;
+            document.getElementById('deleteStoryBtn').disabled = true;
+
+            try {
+                await apiCall('DELETE', `/stories/${currentStoryId}`);
+
+                // Clear current story
+                currentStoryId = null;
+                document.getElementById('storyContent').innerHTML = `
+                    <div class="empty-state">
+                        Select a story from the dropdown or create a new one to begin your adventure.
+                    </div>
+                `;
+                document.getElementById('sendActionBtn').disabled = true;
+                document.getElementById('deleteStoryBtn').style.display = 'none';
+
+                // Reload stories and reset dropdown
+                await loadStories();
+                document.getElementById('storySelect').value = '';
+
+            } catch (error) {
+                console.error('Failed to delete story:', error);
+                showError(error, 'Failed to delete story');
+            } finally {
+                isLoading = false;
+                document.getElementById('deleteStoryBtn').disabled = false;
+            }
+        }
+
         // Event listeners
         document.getElementById('storySelect').addEventListener('change', (e) => {
-            loadStory(e.target.value);
+            if (!e.target.value) {
+                // Hide delete button when no story is selected
+                document.getElementById('deleteStoryBtn').style.display = 'none';
+                currentStoryId = null;
+                document.getElementById('storyContent').innerHTML = `
+                    <div class="empty-state">
+                        Select a story from the dropdown or create a new one to begin your adventure.
+                    </div>
+                `;
+                document.getElementById('sendActionBtn').disabled = true;
+            } else {
+                loadStory(e.target.value);
+            }
         });
 
         document.getElementById('sendActionBtn').addEventListener('click', sendAction);
@@ -641,6 +725,35 @@
         });
 
         document.getElementById('newStoryBtn').addEventListener('click', createNewStory);
+
+        document.getElementById('deleteStoryBtn').addEventListener('click', deleteStory);
+
+        // Loading state management
+        function setUILoadingState(loading, message = null) {
+            isLoading = loading;
+
+            // List of all interactive elements
+            const elements = [
+                'storySelect',
+                'newStoryBtn',
+                'deleteStoryBtn',
+                'sendActionBtn',
+                'actionInput'
+            ];
+
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.disabled = loading;
+                }
+            });
+
+            // Show loading message in dropdown if provided
+            if (message && loading) {
+                const select = document.getElementById('storySelect');
+                select.innerHTML = `<option value="">${message}</option>`;
+            }
+        }
 
         // Initialize Google Sign-In
         window.onload = function () {

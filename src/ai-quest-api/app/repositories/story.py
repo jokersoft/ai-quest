@@ -43,3 +43,15 @@ class StoryRepository:
             .filter(Story.user_id == user_id_bytes)
             .all()
         )
+
+    def delete(self, story_id_bytes: bytes) -> None:
+        story_id_str = str(uuid.UUID(bytes=story_id_bytes))
+
+        existing_story = self.get(story_id_bytes)
+        if not existing_story:
+            raise ValueError(f"Story with ID {story_id_str} not found")
+
+        self.db_session.delete(existing_story)
+        self.db_session.commit()
+
+        _LOGGER.info(f"Deleted story: {story_id_str}")
