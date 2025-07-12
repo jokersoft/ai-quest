@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+import uuid
 
 
 class Chapter(BaseModel):
@@ -9,6 +10,12 @@ class Chapter(BaseModel):
     action: str
     outcome: str
     number: int
+
+    @field_validator('id', mode='before')
+    def convert_id(cls, v):
+        if isinstance(v, bytes):
+            return str(uuid.UUID(bytes=v))
+        return v
 
     class Config:
         from_attributes = True
