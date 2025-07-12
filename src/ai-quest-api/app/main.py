@@ -51,7 +51,7 @@ def stories(
     return stories
 
 
-@app.post("/story/init", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
+@app.post("/stories/init", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
 def init(
     user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
     db: Session = fastapi.Depends(db_client.get_db)
@@ -62,14 +62,14 @@ def init(
     return new_story
 
 
-@app.get("/story/{story_id}", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
+@app.get("/stories/{story_id}", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
 def get(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
     logger.debug(f"Retrieving Story {story_id}")
     story_service = StoryService(db)
     return story_service.get(story_id)
 
 
-@app.post("/story/{story_id}/act", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
+@app.post("/stories/{story_id}/act", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
 def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
     logger.debug(f"Acting inside Story {story_id}")
     story_service = StoryService(db)
@@ -85,7 +85,7 @@ async def generic_exception_handler(request: fastapi.Request, e: Exception):
         headers={
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization",
         },
     )

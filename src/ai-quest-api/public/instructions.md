@@ -3,8 +3,8 @@ I am creating a thin FE app for my backend API (text rpg).
 
 I want to have a few sections:
 - dropdown where I can select my current story (list of stories from api call). On dropdown change - load the full story. `GET /stories`. Returns a list of Story objects.
-- current full story: big area with the summary of the current story and a list of messages of me vs dungeon master (like chat) `GET /story/{id}` returns the FullStory object.
-- Textarea to type and send my actions to the story API (+ button). `POST /story/{story_id}/act` with payload `{ "message": "my action" }`. Returns FullStory. Needs to refresh the current story view.
+- current full story: big area with the summary of the current story and a list of messages of me vs dungeon master (like chat) `GET /stories/{id}` returns the FullStory object.
+- Textarea to type and send my actions to the story API (+ button). `POST /stories/{story_id}/act` with payload `{ "message": "my action" }`. Returns FullStory. Needs to refresh the current story view.
 - button to start a new story (which will call `POST /stories/init` with no payload).
 - debug area at the bottom to display responses of all API calls made.
 
@@ -12,7 +12,7 @@ Also:
 - use accounts.google.com/gsi/client to authenticate users (client_id=44639786367-9hph0j2ih57oc1a8pbo573jdm7nspsqo.apps.googleusercontent.com)
 
 FullStory response structure:
-`GET /story/{id}`:
+`GET /stories/{id}`:
 ```json
 {
   "status": 200,

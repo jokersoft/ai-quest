@@ -2,8 +2,8 @@ TODO
 ====
 
 - minimal UI to function
-  - list stories
   - delete story & related data
+  - save and auto-refresh auth token
   - pagination for the FullStory
 - basic test
 - record story abstractions
@@ -17,5 +17,13 @@ Story data model:
 - short summary (mutable)
 - name (mutable)
 
-## Backlog
+## Features
+- health
+- valuables (inventory)
+- karma (choices/decisions)
+- generate book from your adventures
 - after 100 messages allow to reflect on choices
+
+## R'n'D
+- multiplayer
+- management simulation game

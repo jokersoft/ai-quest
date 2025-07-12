@@ -502,7 +502,7 @@
             document.getElementById('sendActionBtn').disabled = true;
 
             try {
-                const response = await apiCall('GET', `/story/${storyId}`);
+                const response = await apiCall('GET', `/stories/${storyId}`);
                 currentStoryId = storyId;
                 displayStory(response);
                 document.getElementById('sendActionBtn').disabled = false;
@@ -588,7 +588,7 @@
             input.disabled = true;
 
             try {
-                const response = await apiCall('POST', `/story/${currentStoryId}/act`, { message: action });
+                const response = await apiCall('POST', `/stories/${currentStoryId}/act`, { message: action });
                 input.value = '';
                 displayStory(response);
             } catch (error) {
@@ -609,7 +609,7 @@
             document.getElementById('newStoryBtn').disabled = true;
 
             try {
-                const response = await apiCall('POST', '/story/init');
+                const response = await apiCall('POST', '/stories/init');
                 await loadStories();
 
                 // Select the new story
