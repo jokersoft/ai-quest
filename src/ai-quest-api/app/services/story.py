@@ -171,3 +171,6 @@ class StoryService:
         )
 
         return full_story
+
+    def delete(self, story_id: uuid.UUID) -> None:
+        self._story_repository.delete(story_id.bytes)

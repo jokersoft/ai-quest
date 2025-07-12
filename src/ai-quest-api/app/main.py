@@ -76,6 +76,14 @@ def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.
     return story_service.act(story_id, user_decision.message)
 
 
+@app.delete("/stories/{story_id}", dependencies=[fastapi.Depends(security.verify_api_key)])
+def delete(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)):
+    logger.debug(f"Deleting Story {story_id}")
+    story_service = StoryService(db)
+    story_service.delete(story_id)
+    return fastapi.responses.Response(status_code=204)
+
+
 # Handlers
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: fastapi.Request, e: Exception):
