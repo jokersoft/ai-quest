@@ -329,7 +329,7 @@
             </div>
 
             <div class="action-container">
-                <textarea id="actionInput" placeholder="Enter your action..."></textarea>
+                <textarea id="actionInput" placeholder="Choose proposed or enter your own action..."></textarea>
                 <button id="sendActionBtn" class="btn btn-primary" disabled>Send Action</button>
             </div>
         </div>
@@ -583,15 +583,6 @@
                             </div>
                         ` : ''}
 
-                        ${chapter.choices && chapter.choices.length > 0 ? `
-                            <div class="chapter-section">
-                                <div class="section-label">Choices Presented</div>
-                                <ul class="choices-list">
-                                    ${chapter.choices.map(choice => `<li class="choice-item">${choice}</li>`).join('')}
-                                </ul>
-                            </div>
-                        ` : ''}
-
                         ${chapter.action ? `
                             <div class="chapter-section">
                                 <div class="section-label">Your Action</div>
@@ -603,6 +594,15 @@
                             <div class="chapter-section">
                                 <div class="section-label">Outcome</div>
                                 <div class="outcome">${chapter.outcome.replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
+
+                        ${chapter.choices && chapter.choices.length > 0 ? `
+                            <div class="chapter-section">
+                                <div class="section-label">Choices Presented</div>
+                                <ul class="choices-list">
+                                    ${chapter.choices.map(choice => `<li class="choice-item">${choice}</li>`).join('')}
+                                </ul>
                             </div>
                         ` : ''}
                     </div>
