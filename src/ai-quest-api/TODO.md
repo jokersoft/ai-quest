@@ -20,6 +20,9 @@ Story data model:
 - karma (choices/decisions)
 - generate book from your adventures
 - after 100 messages allow to reflect on choices
+- "meaningness" of events (outcomes?)
+  - to exclude from the context for low importance
+  - to make high importance events shape title and summary
 
 ## R'n'D
 - multiplayer
