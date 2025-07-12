@@ -2,13 +2,11 @@ TODO
 ====
 
 - minimal UI to function
-  - list stories
   - delete story & related data
   - pagination for the FullStory
 - basic test
-- record story abstractions
-  - actions
-  - situations
+  - see git_hooks folder
+- fix 1st Chapter choices
 - vectorise story abstractions
 - quick actions (proposed by LLM)
 
