@@ -1,1 +1,0 @@
-src/ai-quest-api-lambda/README.md

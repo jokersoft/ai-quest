@@ -7,7 +7,8 @@ TODO
 - basic test
   - see git_hooks folder
 - fix 1st Chapter choices
-- vectorise story abstractions
+- Implement long term memory
+  - https://www.philschmid.de/gemini-with-memory
 - quick actions (proposed by LLM)
 
 
