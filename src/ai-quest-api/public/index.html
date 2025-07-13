@@ -161,19 +161,6 @@
             line-height: 1.6;
         }
 
-        .choices-list {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .choice-item {
-            padding: 8px 12px;
-            margin-bottom: 8px;
-            background-color: #2a3441;
-            border-radius: 4px;
-            border-left: 3px solid #4a5568;
-        }
-
         .action {
             background-color: #2b6cb0;
             padding: 12px;
@@ -190,11 +177,56 @@
 
         .action-container {
             display: flex;
+            flex-direction: column;
             gap: 10px;
             background-color: #1a1a1a;
             border: 1px solid #333;
             border-radius: 8px;
             padding: 15px;
+        }
+
+        .current-choices {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .choices-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #9ca3af;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .current-choices-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .current-choice-item {
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background-color: #1a202c;
+            border-radius: 4px;
+            border-left: 3px solid #3182ce;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .current-choice-item:hover {
+            background-color: #2d3748;
+        }
+
+        .current-choice-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .action-input-container {
+            display: flex;
+            gap: 10px;
         }
 
         #actionInput {
@@ -329,8 +361,16 @@
             </div>
 
             <div class="action-container">
-                <textarea id="actionInput" placeholder="Choose proposed or enter your own action..."></textarea>
-                <button id="sendActionBtn" class="btn btn-primary" disabled>Send Action</button>
+                <div id="currentChoicesContainer" style="display: none;">
+                    <div class="current-choices">
+                        <div class="choices-title">Current Choices</div>
+                        <ul id="currentChoicesList" class="current-choices-list"></ul>
+                    </div>
+                </div>
+                <div class="action-input-container">
+                    <textarea id="actionInput" placeholder="Choose proposed or enter your own action..."></textarea>
+                    <button id="sendActionBtn" class="btn btn-primary" disabled>Send Action</button>
+                </div>
             </div>
         </div>
 
@@ -596,15 +636,6 @@
                                 <div class="outcome">${chapter.outcome.replace(/\n/g, '<br>')}</div>
                             </div>
                         ` : ''}
-
-                        ${chapter.choices && chapter.choices.length > 0 ? `
-                            <div class="chapter-section">
-                                <div class="section-label">Choices Presented</div>
-                                <ul class="choices-list">
-                                    ${chapter.choices.map(choice => `<li class="choice-item">${choice}</li>`).join('')}
-                                </ul>
-                            </div>
-                        ` : ''}
                     </div>
                 `;
             });
@@ -612,6 +643,33 @@
 
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
+
+            // Display current choices
+            displayCurrentChoices(story.current_choices || []);
+        }
+
+        function displayCurrentChoices(choices) {
+            const container = document.getElementById('currentChoicesContainer');
+            const choicesList = document.getElementById('currentChoicesList');
+
+            if (!choices || choices.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            choicesList.innerHTML = '';
+
+            choices.forEach(choice => {
+                const li = document.createElement('li');
+                li.className = 'current-choice-item';
+                li.textContent = choice;
+                li.onclick = () => {
+                    document.getElementById('actionInput').value = choice;
+                    document.getElementById('actionInput').focus();
+                };
+                choicesList.appendChild(li);
+            });
         }
 
         async function sendAction() {

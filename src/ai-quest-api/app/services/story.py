@@ -38,6 +38,7 @@ class StoryService:
             id=story_entity.id,
             user_id=story_entity.user_id,
             chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
+            current_choices=self._chapter_repository.get_last_chapter(story_id.bytes).choices,
         )
 
         return full_story
