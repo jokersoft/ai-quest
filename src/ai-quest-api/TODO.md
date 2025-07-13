@@ -1,9 +1,6 @@
 TODO
 ====
 
-- Make use of choices of last chapter
-  - add choices of the last chapter to the FullStoryResponse.choices?
-  - remove choices from each Chapter response
 - basic actual test
 - Implement long term memory
   - https://www.philschmid.de/gemini-with-memory
