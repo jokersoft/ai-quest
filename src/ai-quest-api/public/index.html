@@ -485,31 +485,12 @@
 
         // Enhanced scroll to bottom helper function - scrolls entire page to bottom
         function scrollToBottom() {
-            // Force a reflow to ensure all content is rendered
-            document.body.offsetHeight;
-
-            const maxScroll = document.body.scrollHeight - window.innerHeight;
-
-            // Only attempt to scroll if there's actually content to scroll
-            if (maxScroll > 0) {
-                // Use requestAnimationFrame to ensure DOM is fully updated
-                requestAnimationFrame(() => {
-                    window.scrollTo({
-                        top: document.body.scrollHeight,
-                        behavior: 'smooth'
-                    });
-
-                    // Fallback with immediate scroll if needed
-                    requestAnimationFrame(() => {
-                        if (window.scrollY < maxScroll - 10) {
-                            window.scrollTo({
-                                top: document.body.scrollHeight,
-                                behavior: 'auto'
-                            });
-                        }
-                    });
+            requestAnimationFrame(() => {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
                 });
-            }
+            });
         }
 
         // Enhanced API helper with better error handling
