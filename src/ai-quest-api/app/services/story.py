@@ -33,12 +33,17 @@ class StoryService:
         if not story_entity:
             raise ValueError(f"Story with ID {story_id} not found")
 
+        # Get the last chapter to extract current choices
+        last_chapter = self._chapter_repository.get_last_chapter(story_id.bytes)
+        current_choices = last_chapter.choices if last_chapter else []
+
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=story_entity.id,
             user_id=story_entity.user_id,
+            title=story_entity.title,
             chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
-            current_choices=self._chapter_repository.get_last_chapter(story_id.bytes).choices,
+            current_choices=current_choices,
         )
 
         return full_story
@@ -90,6 +95,7 @@ class StoryService:
             user_id=user_info.user_id,
             title=story_title,
             chapters=self._chapter_repository.get_chapters_by_story_id(saved_story.id),
+            current_choices=dm_intro_message.choices,
         )
 
         return full_story
@@ -168,7 +174,9 @@ class StoryService:
         full_story = FullStoryResponse(
             id=story_entity.id,
             user_id=story_entity.user_id,
+            title=story_entity.title,
             chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
+            current_choices=assistant_response.choices,
         )
 
         return full_story
