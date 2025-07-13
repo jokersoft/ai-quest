@@ -43,3 +43,4 @@ class Story(BaseModel):
 
 class FullStory(Story):
     chapters: list[Chapter]
+    current_choices: list[str]

@@ -19,6 +19,10 @@ class ChapterRepository:
         return self.db_session.query(Chapter).filter(Chapter.story_id == story_id_bytes).order_by(
             asc(Chapter.number)).all()
 
+    def get_last_chapter(self, story_id_bytes: bytes) -> Chapter:
+        return self.db_session.query(Chapter).filter(Chapter.story_id == story_id_bytes).order_by(
+            Chapter.number.desc()).first()
+
     def get_max_chapter_number(self, story_id_bytes: bytes) -> int:
         max_chapter = self.db_session.query(Chapter).filter(Chapter.story_id == story_id_bytes).order_by(
             Chapter.number.desc()).first()

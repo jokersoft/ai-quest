@@ -1,8 +1,6 @@
 TODO
 ====
 
-- Make use of choices of last chapter
-  - maybe add choices of the last chapter to the FullStoryResponse.choices?
 - basic actual test
 - Implement long term memory
   - https://www.philschmid.de/gemini-with-memory
@@ -16,6 +14,7 @@ Story data model:
 
 ## Features
 - health
+  - or "viability" - must end story if runs out 
 - valuables (inventory)
 - karma (choices/decisions)
 - generate book from your adventures
@@ -23,6 +22,7 @@ Story data model:
 - "meaningness" of events (outcomes?)
   - to exclude from the context for low importance
   - to make high importance events shape title and summary
+- response streaming via socket or streamlit
 
 ## R'n'D
 - multiplayer
