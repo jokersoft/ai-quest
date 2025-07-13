@@ -121,7 +121,9 @@
             border-radius: 8px;
             padding: 20px;
             overflow-y: auto;
+            overflow-x: hidden;
             min-height: 400px;
+            scroll-behavior: smooth;
         }
 
         .story-title {
@@ -481,6 +483,35 @@
             alert(message);
         }
 
+        // Enhanced scroll to bottom helper function - scrolls entire page to bottom
+        function scrollToBottom() {
+            // Force a reflow to ensure all content is rendered
+            document.body.offsetHeight;
+
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+
+            // Only attempt to scroll if there's actually content to scroll
+            if (maxScroll > 0) {
+                // Use requestAnimationFrame to ensure DOM is fully updated
+                requestAnimationFrame(() => {
+                    window.scrollTo({
+                        top: document.body.scrollHeight,
+                        behavior: 'smooth'
+                    });
+
+                    // Fallback with immediate scroll if needed
+                    requestAnimationFrame(() => {
+                        if (window.scrollY < maxScroll - 10) {
+                            window.scrollTo({
+                                top: document.body.scrollHeight,
+                                behavior: 'auto'
+                            });
+                        }
+                    });
+                });
+            }
+        }
+
         // Enhanced API helper with better error handling
         async function apiCall(method, endpoint, data = null) {
             const url = `${API_BASE_URL}${endpoint}`;
@@ -689,18 +720,20 @@
             html += '</div>';
 
             container.innerHTML = html;
-            container.scrollTop = container.scrollHeight;
 
-            // Display current choices
-            displayCurrentChoices(story.current_choices || []);
+            // Display choices and scroll after everything is rendered
+            displayCurrentChoices(story.current_choices || [], scrollToBottom);
         }
 
-        function displayCurrentChoices(choices) {
+        function displayCurrentChoices(choices, callback) {
             const container = document.getElementById('currentChoicesContainer');
             const choicesList = document.getElementById('currentChoicesList');
 
             if (!choices || choices.length === 0) {
                 container.style.display = 'none';
+                if (callback) {
+                    callback();
+                }
                 return;
             }
 
@@ -719,6 +752,10 @@
                 };
                 choicesList.appendChild(li);
             });
+
+            if (callback) {
+                callback();
+            }
         }
 
         async function sendAction() {
