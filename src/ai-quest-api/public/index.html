@@ -216,7 +216,13 @@
             transition: background-color 0.2s;
         }
 
-        .current-choice-item:hover {
+        .current-choice-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .current-choice-item:not(.disabled):hover {
             background-color: #2d3748;
         }
 
@@ -616,13 +622,6 @@
                             </div>
                         ` : ''}
 
-                        ${chapter.situation ? `
-                            <div class="chapter-section">
-                                <div class="section-label">Situation</div>
-                                <div class="situation">${chapter.situation.replace(/\n/g, '<br>')}</div>
-                            </div>
-                        ` : ''}
-
                         ${chapter.action ? `
                             <div class="chapter-section">
                                 <div class="section-label">Your Action</div>
@@ -634,6 +633,13 @@
                             <div class="chapter-section">
                                 <div class="section-label">Outcome</div>
                                 <div class="outcome">${chapter.outcome.replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
+
+                        ${chapter.situation ? `
+                            <div class="chapter-section">
+                                <div class="section-label">Situation</div>
+                                <div class="situation">${chapter.situation.replace(/\n/g, '<br>')}</div>
                             </div>
                         ` : ''}
                     </div>
@@ -665,8 +671,10 @@
                 li.className = 'current-choice-item';
                 li.textContent = choice;
                 li.onclick = () => {
-                    document.getElementById('actionInput').value = choice;
-                    document.getElementById('actionInput').focus();
+                    if (isLoading) return; // Prevent clicks during loading
+                    const actionInput = document.getElementById('actionInput');
+                    actionInput.value = choice;
+                    sendAction();
                 };
                 choicesList.appendChild(li);
             });
@@ -678,21 +686,17 @@
 
             if (!action || !currentStoryId || isLoading) return;
 
-            isLoading = true;
-            document.getElementById('sendActionBtn').disabled = true;
-            input.disabled = true;
+            setUILoadingState(true);
 
             try {
                 const response = await apiCall('POST', `/stories/${currentStoryId}/act`, { message: action });
-                input.value = '';
+                input.value = ''; // Clear input after successful action
                 displayStory(response);
             } catch (error) {
                 console.error('Failed to send action:', error);
                 showError(error, 'Failed to send action');
             } finally {
-                isLoading = false;
-                document.getElementById('sendActionBtn').disabled = false;
-                input.disabled = false;
+                setUILoadingState(false);
                 input.focus();
             }
         }
@@ -700,8 +704,7 @@
         async function createNewStory() {
             if (isLoading) return;
 
-            isLoading = true;
-            document.getElementById('newStoryBtn').disabled = true;
+            setUILoadingState(true);
 
             try {
                 const response = await apiCall('POST', '/stories/init');
@@ -716,8 +719,7 @@
                 console.error('Failed to create story:', error);
                 showError(error, 'Failed to create new story');
             } finally {
-                isLoading = false;
-                document.getElementById('newStoryBtn').disabled = false;
+                setUILoadingState(false);
             }
         }
 
@@ -727,8 +729,7 @@
             const confirmed = confirm('Are you sure you want to delete this story? This action cannot be undone.');
             if (!confirmed) return;
 
-            isLoading = true;
-            document.getElementById('deleteStoryBtn').disabled = true;
+            setUILoadingState(true);
 
             try {
                 await apiCall('DELETE', `/stories/${currentStoryId}`);
@@ -751,8 +752,7 @@
                 console.error('Failed to delete story:', error);
                 showError(error, 'Failed to delete story');
             } finally {
-                isLoading = false;
-                document.getElementById('deleteStoryBtn').disabled = false;
+                setUILoadingState(false);
             }
         }
 
@@ -806,6 +806,16 @@
                 }
             });
 
+            // Disable/enable choice items
+            const choiceItems = document.querySelectorAll('.current-choice-item');
+            choiceItems.forEach(item => {
+                if (loading) {
+                    item.classList.add('disabled');
+                } else {
+                    item.classList.remove('disabled');
+                }
+            });
+
             // Show loading message in dropdown if provided
             if (message && loading) {
                 const select = document.getElementById('storySelect');
@@ -815,6 +825,9 @@
 
         // Initialize Google Sign-In
         window.onload = function () {
+            // Clear action input on page load
+            document.getElementById('actionInput').value = '';
+
             google.accounts.id.initialize({
                 client_id: '44639786367-9hph0j2ih57oc1a8pbo573jdm7nspsqo.apps.googleusercontent.com',
                 callback: handleCredentialResponse
