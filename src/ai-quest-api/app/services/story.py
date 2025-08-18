@@ -1,5 +1,7 @@
+import asyncio
 import datetime
 import logging
+from typing import Optional
 import uuid
 
 from sqlalchemy.orm import Session
@@ -11,6 +13,7 @@ from app.repositories.chapter import ChapterRepository
 from app.repositories.story import StoryRepository
 from app.repositories.message import MessageRepository
 from app.services import dm
+from app.services.memory.i_memory_store import MemoryStoreInterface
 from app.services.user import UserInfo
 from app.schemas.story import Story as StoryResponse, FullStory as FullStoryResponse
 
@@ -20,12 +23,13 @@ logger.setLevel(logging.DEBUG)
 INITIAL_USER_MESSAGE = "Wake up!"  # Initial message to start the story
 
 class StoryService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, memory_service: Optional[MemoryStoreInterface] = None):
         self.db = db
         self._dm = dm.DungeonMaster()
         self._story_repository = StoryRepository(db)
         self._message_repository = MessageRepository(db)
         self._chapter_repository = ChapterRepository(db)
+        self._memory_service = memory_service
 
     def get(self, story_id: uuid.UUID) -> FullStoryResponse:
         # Get story by ID
@@ -72,6 +76,25 @@ class StoryService:
         )
         self._chapter_repository.add(new_chapter)
 
+        # Store in memory service if available
+        if self._memory_service:
+            chapter_data = {
+                'narration': dm_intro_message.narration,
+                'situation': dm_intro_message.situation,
+                'choices': dm_intro_message.choices,
+                'action': INITIAL_USER_MESSAGE,
+                'outcome': dm_intro_message.outcome
+            }
+
+            # Fire and forget - don't block story creation
+            asyncio.create_task(
+                self._memory_service.add_memory(
+                    story_id_uuid,
+                    chapter_number=1,
+                    chapter_data=chapter_data
+                )
+            )
+
         # Save chat messages
         logger.debug(f"dm_intro_message.narration: {dm_intro_message.narration}")
         messages.append({"role": "assistant", "content": dm_intro_message.to_string()})
@@ -114,7 +137,7 @@ class StoryService:
         ]
         return stories
 
-    def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
+    async def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
         # Get existing story
         story_entity = self._story_repository.get(story_id.bytes)
         if not story_entity:
@@ -122,6 +145,23 @@ class StoryService:
 
         # Get existing messages
         message_entities = self._message_repository.get_messages_by_story_id(story_id.bytes)
+
+        # Get memory context if memory service is available
+        memory_context = ""
+        if self._memory_service:
+            # Get last chapter for current situation
+            last_chapter = self._chapter_repository.get_last_chapter(story_id.bytes)
+            current_situation = last_chapter.situation if last_chapter else user_decision
+
+            # Get relevant memories
+            memory_context = await self._memory_service.get_story_context(
+                story_id=story_id,
+                current_situation=f"{current_situation} {user_decision}",
+                max_chapters=3
+            )
+
+            if memory_context:
+                logger.info(f"Using memory context: {memory_context[:200]}...")
 
         # Add user message to the story
         user_message_entity = MessageEntity(
@@ -138,24 +178,51 @@ class StoryService:
             for message in message_entities
         ]
 
+        # Inject memory context if available
+        if memory_context:
+            # Add as system message at the beginning
+            llm_messages.insert(0, {
+                "role": "system",
+                "content": f"Use these relevant past events to maintain story continuity:\n{memory_context}"
+            })
+
         # Get response from LLM
         assistant_response = self._dm.send_messages(llm_messages)
 
-        # Record the 1st chapter
+        # Record the new chapter
+        new_chapter_number = self._chapter_repository.get_max_chapter_number(story_id.bytes) + 1
         new_chapter = ChapterEntity(
             narration=assistant_response.narration,
             situation=assistant_response.situation,
             choices=assistant_response.choices,
             action=user_decision,
             outcome=assistant_response.outcome,
-            number=self._chapter_repository.get_max_chapter_number(story_id.bytes) + 1,
+            number=new_chapter_number,
             story_id=story_id.bytes,
         )
         self._chapter_repository.add(new_chapter)
 
+        # Store in memory service if available
+        if self._memory_service:
+            chapter_data = {
+                'narration': assistant_response.narration,
+                'situation': assistant_response.situation,
+                'choices': assistant_response.choices,
+                'action': user_decision,
+                'outcome': assistant_response.outcome
+            }
+
+            asyncio.create_task(
+                self._memory_service.add_memory(
+                    story_id,
+                    chapter_number=new_chapter_number,
+                    chapter_data=chapter_data
+                )
+            )
+
         # Save chat messages
         logger.debug(f"last_message narration: {assistant_response.narration}")
-        llm_messages.append({"role": "assistant", "content": assistant_response})
+        llm_messages.append({"role": "assistant", "content": assistant_response.to_string()})
 
         # Add LLM response to the story
         assistant_message_entity = MessageEntity(
@@ -181,5 +248,10 @@ class StoryService:
 
         return full_story
 
-    def delete(self, story_id: uuid.UUID) -> None:
+    async def delete(self, story_id: uuid.UUID) -> None:
+        """Delete story and associated memories"""
         self._story_repository.delete(story_id.bytes)
+
+        # Clean up memories if service is available
+        if self._memory_service:
+            await self._memory_service.delete_story_memories(story_id)
