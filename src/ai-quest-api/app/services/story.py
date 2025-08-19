@@ -140,8 +140,8 @@ class StoryService:
         # Convert to schema DTOs
         stories = [
             StoryResponse(
-                id=story.id,
-                user_id=story.user_id,
+                id=uuid.UUID(bytes=story.id),
+                user_id=uuid.UUID(bytes=story.user_id),
                 title=story.title
             )
             for story in story_entities
