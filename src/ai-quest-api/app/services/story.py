@@ -248,12 +248,16 @@ class StoryService:
         self._message_repository.add(user_message_entity)
         self._message_repository.add(assistant_message_entity)
 
+        # Convert to response DTOs with proper UUID conversion
+        chapter_entities = self._chapter_repository.get_chapters_by_story_id(story_id.bytes)
+        chapters = [chapter.to_dict() for chapter in chapter_entities]
+
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=story_entity.id,
             user_id=story_entity.user_id,
             title=story_entity.title,
-            chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
+            chapters=chapters,
             current_choices=assistant_response.choices,
         )
 
