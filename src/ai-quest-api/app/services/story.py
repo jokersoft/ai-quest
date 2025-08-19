@@ -137,7 +137,7 @@ class StoryService:
         ]
         return stories
 
-    async def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
+    def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
         # Get existing story
         story_entity = self._story_repository.get(story_id.bytes)
         if not story_entity:
@@ -153,12 +153,16 @@ class StoryService:
             last_chapter = self._chapter_repository.get_last_chapter(story_id.bytes)
             current_situation = last_chapter.situation if last_chapter else user_decision
 
-            # Get relevant memories
-            memory_context = await self._memory_service.get_story_context(
-                story_id=story_id,
-                current_situation=f"{current_situation} {user_decision}",
-                max_chapters=3
-            )
+            # Get relevant memories synchronously
+            try:
+                memory_context = asyncio.run(self._memory_service.get_story_context(
+                    story_id=story_id,
+                    current_situation=f"{current_situation} {user_decision}",
+                    max_chapters=3
+                ))
+            except Exception as e:
+                logger.warning(f"Failed to get memory context: {e}")
+                memory_context = ""
 
             if memory_context:
                 logger.info(f"Using memory context: {memory_context[:200]}...")
@@ -212,6 +216,7 @@ class StoryService:
                 'outcome': assistant_response.outcome
             }
 
+            # Fire and forget - don't block response
             asyncio.create_task(
                 self._memory_service.add_memory(
                     story_id,
@@ -248,10 +253,11 @@ class StoryService:
 
         return full_story
 
-    async def delete(self, story_id: uuid.UUID) -> None:
+    def delete(self, story_id: uuid.UUID) -> None:
         """Delete story and associated memories"""
         self._story_repository.delete(story_id.bytes)
 
         # Clean up memories if service is available
         if self._memory_service:
-            await self._memory_service.delete_story_memories(story_id)
+            # Fire and forget cleanup
+            asyncio.create_task(self._memory_service.delete_story_memories(story_id))
