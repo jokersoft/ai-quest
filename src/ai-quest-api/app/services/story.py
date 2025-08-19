@@ -44,14 +44,13 @@ class StoryService:
 
         # Get chapters and convert them to proper format
         chapter_entities = self._chapter_repository.get_chapters_by_story_id(story_id.bytes)
-        chapters = [chapter.to_dict() for chapter in chapter_entities]
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=uuid.UUID(bytes=story_entity.id),
             user_id=uuid.UUID(bytes=story_entity.user_id),
             title=story_entity.title,
-            chapters=chapters,
+            chapters=chapter_entities,
             current_choices=current_choices,
         )
 
@@ -129,14 +128,13 @@ class StoryService:
 
         # Get chapters and convert them to proper format
         chapter_entities = self._chapter_repository.get_chapters_by_story_id(saved_story.id)
-        chapters = [chapter.to_dict() for chapter in chapter_entities]
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=saved_story.id,
             user_id=user_info.user_id,
             title=story_title,
-            chapters=chapters,
+            chapters=chapter_entities,
             current_choices=dm_intro_message.choices,
         )
 
@@ -254,14 +252,13 @@ class StoryService:
 
         # Convert to response DTOs with proper UUID conversion
         chapter_entities = self._chapter_repository.get_chapters_by_story_id(story_id.bytes)
-        chapters = [chapter.to_dict() for chapter in chapter_entities]
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=story_entity.id,
             user_id=story_entity.user_id,
             title=story_entity.title,
-            chapters=chapters,
+            chapters=chapter_entities,
             current_choices=assistant_response.choices,
         )
 

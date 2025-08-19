@@ -29,7 +29,8 @@ class Chapter(Base):
         """Convert binary story_id to UUID object"""
         return uuid.UUID(bytes=self.story_id) if self.story_id else None
 
-    def to_dict(self) -> dict:
+    def __dict__(self):
+        """Make the entity directly serializable"""
         return {
             'id': str(self.id_uuid) if self.id else None,
             'narration': self.narration,
@@ -41,5 +42,9 @@ class Chapter(Base):
             'story_id': str(self.story_id_uuid) if self.story_id else None
         }
 
+    def dict(self):
+        """Pydantic compatibility method"""
+        return self.__dict__()
+
     def to_json(self) -> str:
-        return json.dumps(self.to_dict())
+        return json.dumps(self.__dict__())
