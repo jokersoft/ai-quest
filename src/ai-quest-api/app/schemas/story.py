@@ -5,6 +5,7 @@ import uuid
 
 class Chapter(BaseModel):
     id: Union[str, bytes, uuid.UUID] = Field(alias='id')
+    story_id: Union[str, bytes, uuid.UUID] = Field(alias='story_id')
     narration: str
     situation: str
     choices: list[str]

@@ -101,9 +101,8 @@ class StoryService:
             # Fire and forget - don't block story creation
             self._run_async_in_thread(
                 self._memory_service.add_memory(
-                    story_id_uuid,
-                    chapter_number=1,
-                    chapter_data=chapter_data
+                    story_id=story_id_uuid,
+                    chapter=new_chapter
                 )
             )
 
@@ -220,20 +219,11 @@ class StoryService:
 
         # Store in memory service if available
         if self._memory_service:
-            chapter_data = {
-                'narration': assistant_response.narration,
-                'situation': assistant_response.situation,
-                'choices': assistant_response.choices,
-                'action': user_decision,
-                'outcome': assistant_response.outcome
-            }
-
             # Fire and forget - don't block response
             self._run_async_in_thread(
                 self._memory_service.add_memory(
                     story_id,
-                    chapter_number=new_chapter_number,
-                    chapter_data=chapter_data
+                    chapter=new_chapter,
                 )
             )
 

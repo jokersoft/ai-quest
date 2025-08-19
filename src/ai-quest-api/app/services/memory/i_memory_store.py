@@ -1,23 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any
 from dataclasses import dataclass
-from datetime import datetime
 import uuid
 
-
-@dataclass
-class ChapterMemory:
-    """Represents a chapter memory - technology-agnostic"""
-    story_id: uuid.UUID
-    chapter_number: int
-    chapter_data: dict[str, Any]  # Contains narration, situation, choices, action, outcome
-    created_at: datetime
+from app.entities.chapter import Chapter as ChapterEntity
+from app.schemas.story import Chapter
 
 
 @dataclass
 class MemorySearchResult:
     """Search result - technology-agnostic"""
-    chapter_memory: ChapterMemory
+    chapter: Chapter
     relevance_score: float
 
 
@@ -25,9 +17,7 @@ class MemoryStoreInterface(ABC):
     """Abstract interface for memory stores"""
 
     @abstractmethod
-    async def add_memory(self, story_id: uuid.UUID,
-                         chapter_number: int,
-                         chapter_data: dict[str, Any]) -> None:
+    async def add_memory(self, story_id: uuid.UUID, chapter: ChapterEntity) -> None:
         """Store a chapter as memory"""
         pass
 

@@ -1,18 +1,18 @@
+"""
+See https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors.html
+"""
+
 import json
 import logging
-import datetime
-from typing import Any, List
 from dataclasses import dataclass
 import uuid
 
 import boto3
 from botocore.exceptions import ClientError
 
-from app.services.memory.i_memory_store import (
-    MemoryStoreInterface,
-    ChapterMemory,
-    MemorySearchResult
-)
+from app.services.memory.i_memory_store import MemoryStoreInterface, MemorySearchResult
+from app.entities.chapter import Chapter as ChapterEntity
+from app.schemas.story import Chapter
 
 logger = logging.getLogger(__name__)
 
@@ -45,24 +45,35 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         index_name = self._get_index_name(story_id)
 
         try:
-            # Check if index exists
-            self.s3vectors_client.describe_index(
-                vectorBucketName=self.config.bucket_name,
-                indexName=index_name
+            # Check if index exists by listing indices
+            response = self.s3vectors_client.list_indices(
+                vectorBucketName=self.config.bucket_name
             )
-            logger.debug(f"Vector index {index_name} already exists")
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'ResourceNotFoundException':
-                # Create index for this story
-                self.s3vectors_client.create_index(
-                    vectorBucketName=self.config.bucket_name,
-                    indexName=index_name,
-                    vectorDimension=self.config.dimension,
-                    distanceMetric='COSINE'
-                )
-                logger.info(f"Created vector index for story: {index_name}")
 
-    async def _generate_embedding(self, text: str) -> List[float]:
+            existing_indices = [idx['indexName'] for idx in response.get('indices', [])]
+
+            if index_name in existing_indices:
+                logger.debug(f"Vector index {index_name} already exists")
+                return
+
+        except ClientError as e:
+            logger.warning(f"Could not list indices: {e}")
+
+        # Create index for this story if it doesn't exist
+        try:
+            self.s3vectors_client.create_index(
+                vectorBucketName=self.config.bucket_name,
+                indexName=index_name,
+                vectorDimension=self.config.dimension,
+                distanceMetric='COSINE'
+            )
+            logger.info(f"Created vector index for story: {index_name}")
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'ResourceAlreadyExistsException':
+                logger.error(f"Error creating index: {e}")
+                raise
+
+    async def _generate_embedding(self, text: str) -> list[float]:
         """Generate embeddings using Amazon Bedrock"""
         try:
             response = self.bedrock_client.invoke_model(
@@ -78,53 +89,32 @@ class AWSS3MemoryStore(MemoryStoreInterface):
             logger.error(f"Error generating embedding: {e}")
             raise
 
-    def _format_chapter_for_embedding(self, chapter_data: dict[str, Any]) -> str:
+    def _format_chapter_for_embedding(self, chapter: ChapterEntity) -> str:
         """Format chapter data for embedding generation"""
-        parts = []
+        return chapter.to_json()
 
-        if isinstance(chapter_data, dict):
-            if 'narration' in chapter_data:
-                parts.append(f"Narration: {chapter_data['narration']}")
-            if 'situation' in chapter_data:
-                parts.append(f"Situation: {chapter_data['situation']}")
-            if 'action' in chapter_data:
-                parts.append(f"Action taken: {chapter_data['action']}")
-            if 'outcome' in chapter_data:
-                parts.append(f"Outcome: {chapter_data['outcome']}")
-            if 'choices' in chapter_data and chapter_data['choices']:
-                parts.append(f"Available choices: {', '.join(chapter_data['choices'])}")
-
-        return " | ".join(parts) if parts else str(chapter_data)
-
-    async def add_memory(self, story_id: uuid.UUID,
-                         chapter_number: int,
-                         chapter_data: dict[str, Any]) -> None:
+    async def add_memory(self, story_id: uuid.UUID, chapter: ChapterEntity) -> None:
         """Store a chapter as memory with its vector embedding"""
         # Ensure index exists for this story
         self._ensure_story_index_exists(story_id)
 
         # Generate embedding
-        embedding_text = self._format_chapter_for_embedding(chapter_data)
+        embedding_text = self._format_chapter_for_embedding(chapter)
         embedding = await self._generate_embedding(embedding_text)
 
         # Create object key - using story_id prefix for organization
-        object_key = f"stories/{story_id}/chapter-{chapter_number}.json"
+        object_key = f"stories/{story_id}/chapter-{chapter.number}.json"
 
         # Add vector to the story-specific index
         try:
-            self.s3vectors_client.put_vector(
-                vectorBucketName=self.config.bucket_name,
-                indexName=self._get_index_name(story_id),
-                objectKey=object_key,
-                vector={"float32": embedding},
-                metadata={
-                    "chapter_number": str(chapter_number),
-                    "action": chapter_data.get('action', ''),
-                    "created_at": datetime.datetime.now(datetime.UTC),
-                }
+            self.s3vectors_client.put_object(
+                Bucket=self.config.bucket_name,
+                Key=object_key,
+                Body=embedding,
+                Metadata=chapter.to_json(),
             )
 
-            logger.info(f"Stored memory for story {story_id}, chapter {chapter_number}")
+            logger.info(f"Stored memory for story {story_id}, chapter {chapter.number}")
 
         except Exception as e:
             logger.error(f"Error storing vector: {e}")
@@ -132,7 +122,7 @@ class AWSS3MemoryStore(MemoryStoreInterface):
 
     async def search_memories(self, story_id: uuid.UUID,
                               query: str,
-                              max_results: int = 5) -> List[MemorySearchResult]:
+                              max_results: int = 5) -> list[MemorySearchResult]:
         """Search for relevant memories using vector similarity"""
         index_name = self._get_index_name(story_id)
 
@@ -186,27 +176,25 @@ class AWSS3MemoryStore(MemoryStoreInterface):
 
         # Sort by chapter number to maintain chronological order
         for result in sorted(search_results, key=lambda x: x.chapter_memory.chapter_number):
-            chapter = result.chapter_memory
-            chapter_summary = self._summarize_chapter(chapter.chapter_data)
+            chapter = result.chapter
+            chapter_summary = self._summarize_chapter(chapter)
             context_parts.append(
-                f"\n[Chapter {chapter.chapter_number}] (relevance: {result.relevance_score:.2f}): {chapter_summary}"
+                f"\n[Chapter {chapter.number}] (relevance: {result.relevance_score:.2f}): {chapter_summary}"
             )
 
         return "\n".join(context_parts)
 
-    def _summarize_chapter(self, chapter_data: dict[str, Any]) -> str:
+    def _summarize_chapter(self, chapter: ChapterEntity) -> str:
         """Summarize chapter data (placeholder for future implementation)"""
         # TODO: Implement actual summarization using Bedrock Claude
         # For now, return a simple concatenation of key elements
         parts = []
 
-        if 'action' in chapter_data:
-            parts.append(f"Action: {chapter_data['action']}")
-        if 'outcome' in chapter_data:
-            outcome = chapter_data['outcome']
-            if len(outcome) > 100:
-                outcome = outcome[:100] + "..."
-            parts.append(f"Outcome: {outcome}")
+        parts.append(f"Action: {chapter.action}")
+        outcome = chapter.outcome
+        if len(outcome) > 100:
+            outcome = outcome[:100] + "..."
+        parts.append(f"Outcome: {outcome}")
 
         return " | ".join(parts) if parts else "Chapter content"
 
@@ -224,3 +212,26 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         except ClientError as e:
             if e.response['Error']['Code'] != 'ResourceNotFoundException':
                 logger.error(f"Error deleting story index: {e}")
+
+        # Delete all objects with the story prefix
+        try:
+            # List all objects for this story
+            response = self.s3vectors_client.list_objects_v2(
+                Bucket=self.config.bucket_name,
+                Prefix=f"stories/{story_id}/"
+            )
+
+            # Delete all objects
+            objects_to_delete = []
+            for obj in response.get('Contents', []):
+                objects_to_delete.append({'Key': obj['Key']})
+
+            if objects_to_delete:
+                self.s3vectors_client.delete_objects(
+                    Bucket=self.config.bucket_name,
+                    Delete={'Objects': objects_to_delete}
+                )
+
+            logger.info(f"Deleted all memories for story {story_id}")
+        except ClientError as e:
+            logger.error(f"Error deleting story memories: {e}")
