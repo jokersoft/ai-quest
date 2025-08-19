@@ -47,8 +47,8 @@ class StoryService:
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
-            id=uuid.UUID(bytes=story_entity.id),
-            user_id=uuid.UUID(bytes=story_entity.user_id),
+            id=story_entity.id,
+            user_id=story_entity.user_id,
             title=story_entity.title,
             chapters=chapter_entities,
             current_choices=current_choices,
@@ -146,8 +146,8 @@ class StoryService:
         # Convert to schema DTOs
         stories = [
             StoryResponse(
-                id=uuid.UUID(bytes=story.id),
-                user_id=uuid.UUID(bytes=story.user_id),
+                id=story.id,
+                user_id=story.user_id,
                 title=story.title
             )
             for story in story_entities

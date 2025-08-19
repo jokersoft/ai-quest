@@ -13,7 +13,7 @@ class Chapter(BaseModel):
     outcome: str
     number: int
 
-    @field_validator('id', mode='before')
+    @field_validator('id', 'story_id', mode='before')
     def convert_id(cls, v: Union[bytes, uuid.UUID, str]) -> str:
         if isinstance(v, bytes):
             return str(uuid.UUID(bytes=v))
