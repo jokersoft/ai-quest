@@ -127,12 +127,16 @@ class StoryService:
             self._message_repository.add(message_entity)
             message_entities.append(message_entity)
 
+        # Get chapters and convert them to proper format
+        chapter_entities = self._chapter_repository.get_chapters_by_story_id(saved_story.id)
+        chapters = [chapter.to_dict() for chapter in chapter_entities]
+
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=saved_story.id,
             user_id=user_info.user_id,
             title=story_title,
-            chapters=self._chapter_repository.get_chapters_by_story_id(saved_story.id),
+            chapters=chapters,
             current_choices=dm_intro_message.choices,
         )
 
