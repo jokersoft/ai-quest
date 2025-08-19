@@ -31,6 +31,8 @@ data "aws_iam_policy_document" "api_lambda" {
       "bedrock:InvokeModel"
     ]
     resources = [
+      "arn:aws:bedrock:eu-central-1::foundation-model/amazon.titan-embed-text-v2:0",
+      "arn:aws:bedrock:eu-central-1::foundation-model/amazon.titan-*",
       "arn:aws:bedrock:eu-central-1::foundation-model/*"
     ]
   }

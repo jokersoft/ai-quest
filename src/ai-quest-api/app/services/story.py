@@ -203,7 +203,7 @@ class StoryService:
         if memory_context:
             # Add as system message at the beginning
             llm_messages.insert(0, {
-                "role": "system",
+                "role": "assistant",
                 "content": f"Use these relevant past events to maintain story continuity:\n{memory_context}"
             })
 
