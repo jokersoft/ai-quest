@@ -33,7 +33,7 @@ llm_client = llm_client.create_client()
 
 # Configure memory client
 memory_store_config = S3VectorConfig(
-    bucket_name="ai-quest-memory-store",
+    bucket_name="ai-quest-memory",
 )
 memory_store = AWSS3MemoryStore(memory_store_config)
 
