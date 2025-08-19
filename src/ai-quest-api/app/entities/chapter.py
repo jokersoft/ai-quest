@@ -42,21 +42,5 @@ class Chapter(Base):
             'story_id': str(self.story_id_uuid) if self.story_id else None
         }
 
-    def keys(self):
-        """Make entity behave like a dict for Pydantic"""
-        return self.to_dict().keys()
-
-    def values(self):
-        """Make entity behave like a dict for Pydantic"""
-        return self.to_dict().values()
-
-    def items(self):
-        """Make entity behave like a dict for Pydantic"""
-        return self.to_dict().items()
-
-    def __getitem__(self, key):
-        """Make entity behave like a dict for Pydantic"""
-        return self.to_dict()[key]
-
     def to_json(self) -> str:
         return json.dumps(self.to_dict())
