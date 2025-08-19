@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime
+import datetime
 from typing import Any, List
 from dataclasses import dataclass
 import uuid
@@ -33,8 +33,7 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         self.config = config
 
         # Initialize clients
-        self.s3_client = boto3.client('s3', region_name=config.region)
-        self.s3vectors_client = boto3.client('s3vectors', region_name=config.region)
+        self.s3vectors_client = boto3.client('s3', region_name=config.region)
         self.bedrock_client = boto3.client('bedrock-runtime', region_name=config.region)
 
     def _get_index_name(self, story_id: uuid.UUID) -> str:
@@ -111,22 +110,6 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         # Create object key - using story_id prefix for organization
         object_key = f"stories/{story_id}/chapter-{chapter_number}.json"
 
-        # Store the chapter data in S3
-        chapter_content = {
-            'story_id': str(story_id),
-            'chapter_number': chapter_number,
-            'chapter_data': chapter_data,
-            'created_at': datetime.utcnow().isoformat(),
-            'embedding_text': embedding_text
-        }
-
-        self.s3_client.put_object(
-            Bucket=self.config.bucket_name,
-            Key=object_key,
-            Body=json.dumps(chapter_content),
-            ContentType='application/json'
-        )
-
         # Add vector to the story-specific index
         try:
             self.s3vectors_client.put_vector(
@@ -137,7 +120,7 @@ class AWSS3MemoryStore(MemoryStoreInterface):
                 metadata={
                     "chapter_number": str(chapter_number),
                     "action": chapter_data.get('action', ''),
-                    "created_at": chapter_content['created_at']
+                    "created_at": datetime.datetime.now(datetime.UTC),
                 }
             )
 
@@ -152,6 +135,8 @@ class AWSS3MemoryStore(MemoryStoreInterface):
                               max_results: int = 5) -> List[MemorySearchResult]:
         """Search for relevant memories using vector similarity"""
         index_name = self._get_index_name(story_id)
+
+        logger.info(f"Searching memory for story {story_id}, query: {query}")
 
         # Generate query embedding
         query_embedding = await self._generate_embedding(query)
@@ -168,33 +153,10 @@ class AWSS3MemoryStore(MemoryStoreInterface):
             )
 
             results = []
+            logger.info(f"response: {response}")
+
             vectors = response.get('vectors', [])
-
-            for vector_result in vectors:
-                # Retrieve the full chapter data from S3
-                obj_response = self.s3_client.get_object(
-                    Bucket=self.config.bucket_name,
-                    Key=vector_result['objectKey']
-                )
-
-                chapter_content = json.loads(obj_response['Body'].read())
-
-                # Create memory object
-                memory = ChapterMemory(
-                    story_id=story_id,
-                    chapter_number=chapter_content['chapter_number'],
-                    chapter_data=chapter_content['chapter_data'],
-                    created_at=datetime.fromisoformat(chapter_content['created_at'])
-                )
-
-                # Convert distance to similarity score
-                # For cosine distance, similarity = 1 - distance
-                similarity_score = 1.0 - vector_result.get('distance', 0.0)
-
-                results.append(MemorySearchResult(
-                    chapter_memory=memory,
-                    relevance_score=similarity_score
-                ))
+            # TODO
 
             return results
 
@@ -262,41 +224,3 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         except ClientError as e:
             if e.response['Error']['Code'] != 'ResourceNotFoundException':
                 logger.error(f"Error deleting story index: {e}")
-
-        # Then, delete all S3 objects for this story
-        prefix = f"stories/{story_id}/"
-
-        paginator = self.s3_client.get_paginator('list_objects_v2')
-        pages = paginator.paginate(Bucket=self.config.bucket_name, Prefix=prefix)
-
-        delete_keys = []
-        for page in pages:
-            for obj in page.get('Contents', []):
-                delete_keys.append({'Key': obj['Key']})
-
-        if delete_keys:
-            # Delete in batches of 1000 (S3 limit)
-            for i in range(0, len(delete_keys), 1000):
-                batch = delete_keys[i:i + 1000]
-                self.s3_client.delete_objects(
-                    Bucket=self.config.bucket_name,
-                    Delete={'Objects': batch}
-                )
-            logger.info(f"Deleted {len(delete_keys)} objects for story {story_id}")
-
-
-# Usage example:
-"""
-from app.services.memory.aws_s3_memory_store import AWSS3MemoryStore, S3VectorConfig
-
-# Initialize the memory store
-config = S3VectorConfig(
-    bucket_name='my-dungeonmaster-memories',
-    region='us-east-1'
-)
-
-memory_store = AWSS3MemoryStore(config)
-
-# Use in your story service
-story_service = StoryService(db, memory_store=memory_store)
-"""
