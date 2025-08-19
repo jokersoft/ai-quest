@@ -29,7 +29,7 @@ class Chapter(Base):
         """Convert binary story_id to UUID object"""
         return uuid.UUID(bytes=self.story_id) if self.story_id else None
 
-    def __dict__(self):
+    def to_dict(self):
         """Make the entity directly serializable"""
         return {
             'id': str(self.id_uuid) if self.id else None,
@@ -42,9 +42,21 @@ class Chapter(Base):
             'story_id': str(self.story_id_uuid) if self.story_id else None
         }
 
-    def dict(self):
-        """Pydantic compatibility method"""
-        return self.__dict__()
+    def keys(self):
+        """Make entity behave like a dict for Pydantic"""
+        return self.to_dict().keys()
+
+    def values(self):
+        """Make entity behave like a dict for Pydantic"""
+        return self.to_dict().values()
+
+    def items(self):
+        """Make entity behave like a dict for Pydantic"""
+        return self.to_dict().items()
+
+    def __getitem__(self, key):
+        """Make entity behave like a dict for Pydantic"""
+        return self.to_dict()[key]
 
     def to_json(self) -> str:
-        return json.dumps(self.__dict__())
+        return json.dumps(self.to_dict())
