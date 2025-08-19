@@ -19,16 +19,26 @@ class Chapter(Base):
     number = Column(Integer, nullable=False)
     story_id = Column(BINARY(16), nullable=False, index=True)
 
+    @property
+    def id_uuid(self) -> uuid.UUID:
+        """Convert binary ID to UUID object"""
+        return uuid.UUID(bytes=self.id) if self.id else None
+
+    @property
+    def story_id_uuid(self) -> uuid.UUID:
+        """Convert binary story_id to UUID object"""
+        return uuid.UUID(bytes=self.story_id) if self.story_id else None
+
     def to_dict(self) -> dict:
         return {
-            'id': uuid.UUID(bytes=self.id).hex if self.id else None,
+            'id': str(self.id_uuid) if self.id else None,
             'narration': self.narration,
             'situation': self.situation,
             'choices': self.choices,
             'action': self.action,
             'outcome': self.outcome,
             'number': self.number,
-            'story_id': uuid.UUID(bytes=self.story_id).hex if self.story_id else None
+            'story_id': str(self.story_id_uuid) if self.story_id else None
         }
 
     def to_json(self) -> str:
