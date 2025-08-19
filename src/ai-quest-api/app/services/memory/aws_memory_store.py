@@ -12,7 +12,6 @@ from botocore.exceptions import ClientError
 
 from app.services.memory.i_memory_store import MemoryStoreInterface, MemorySearchResult
 from app.entities.chapter import Chapter as ChapterEntity
-from app.schemas.story import Chapter
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +20,8 @@ logger = logging.getLogger(__name__)
 class S3VectorConfig:
     """Configuration for S3 Vector store"""
     bucket_name: str
-    bedrock_model_id: str = "amazon.titan-embed-text-v1"
-    dimension: int = 1536  # Titan embeddings dimension
+    bedrock_model_id: str = "amazon.titan-embed-text-v2:0"
+    dimension: int = 1024  # Default dimension for v2 (can be 256, 512, or 1024)
     region: str = "eu-central-1"
 
 

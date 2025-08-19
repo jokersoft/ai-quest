@@ -25,6 +25,29 @@ data "aws_iam_policy_document" "api_lambda" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    actions = [
+      "bedrock:InvokeModel"
+    ]
+    resources = [
+      "arn:aws:bedrock:eu-central-1::foundation-model/*"
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3vectors:PutVectors",
+      "s3vectors:GetVectors",
+      "s3vectors:DeleteVectors",
+      "s3vectors:QueryVectors",
+      "s3vectors:GetIndex",
+      "s3vectors:CreateIndex",
+      "s3vectors:DeleteIndex",
+      "s3vectors:ListIndices"
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role" "api_lambda" {
