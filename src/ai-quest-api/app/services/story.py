@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import logging
+import threading
 from typing import Optional
 import uuid
 
@@ -52,6 +53,17 @@ class StoryService:
 
         return full_story
 
+    def _run_async_in_thread(self, coro):
+        """Helper to run async coroutine in a separate thread"""
+        def target():
+            try:
+                asyncio.run(coro)
+            except Exception as e:
+                logger.warning(f"Async operation failed: {e}")
+
+        thread = threading.Thread(target=target, daemon=True)
+        thread.start()
+
     def init(self, user_info: UserInfo) -> FullStoryResponse:
         # Story init
         story_entity = StoryEntity(user_id=user_info.user_id.bytes)
@@ -87,7 +99,7 @@ class StoryService:
             }
 
             # Fire and forget - don't block story creation
-            asyncio.create_task(
+            self._run_async_in_thread(
                 self._memory_service.add_memory(
                     story_id_uuid,
                     chapter_number=1,
@@ -217,7 +229,7 @@ class StoryService:
             }
 
             # Fire and forget - don't block response
-            asyncio.create_task(
+            self._run_async_in_thread(
                 self._memory_service.add_memory(
                     story_id,
                     chapter_number=new_chapter_number,
@@ -260,4 +272,6 @@ class StoryService:
         # Clean up memories if service is available
         if self._memory_service:
             # Fire and forget cleanup
-            asyncio.create_task(self._memory_service.delete_story_memories(story_id))
+            self._run_async_in_thread(
+                self._memory_service.delete_story_memories(story_id)
+            )

@@ -33,7 +33,7 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         self.config = config
 
         # Initialize clients
-        self.s3vectors_client = boto3.client('s3', region_name=config.region)
+        self.s3vectors_client = boto3.client('s3vectors', region_name=config.region)
         self.bedrock_client = boto3.client('bedrock-runtime', region_name=config.region)
 
     def _get_index_name(self, story_id: uuid.UUID) -> str:
@@ -156,7 +156,7 @@ class AWSS3MemoryStore(MemoryStoreInterface):
             logger.info(f"response: {response}")
 
             vectors = response.get('vectors', [])
-            # TODO
+            # TODO: return list of vectors?
 
             return results
 
