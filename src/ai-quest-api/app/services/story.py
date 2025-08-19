@@ -42,12 +42,16 @@ class StoryService:
         last_chapter = self._chapter_repository.get_last_chapter(story_id.bytes)
         current_choices = last_chapter.choices if last_chapter else []
 
+        # Get chapters and convert them to proper format
+        chapter_entities = self._chapter_repository.get_chapters_by_story_id(story_id.bytes)
+        chapters = [chapter.to_dict() for chapter in chapter_entities]
+
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=uuid.UUID(bytes=story_entity.id),
             user_id=uuid.UUID(bytes=story_entity.user_id),
             title=story_entity.title,
-            chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
+            chapters=chapters,
             current_choices=current_choices,
         )
 
