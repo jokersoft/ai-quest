@@ -31,8 +31,9 @@ class AWSS3MemoryStore(MemoryStoreInterface):
     def __init__(self, config: S3VectorConfig):
         self.config = config
 
-        # Initialize clients
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3vectors.html
         self.s3vectors_client = boto3.client('s3vectors', region_name=config.region)
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime.html
         self.bedrock_client = boto3.client('bedrock-runtime', region_name=config.region)
 
     def _get_index_name(self, story_id: uuid.UUID) -> str:
@@ -44,19 +45,19 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         index_name = self._get_index_name(story_id)
 
         try:
-            # Check if index exists by listing indices
-            response = self.s3vectors_client.list_indices(
+            # Check if index exists by listing indexes
+            response = self.s3vectors_client.list_indexes(
                 vectorBucketName=self.config.bucket_name
             )
 
-            existing_indices = [idx['indexName'] for idx in response.get('indices', [])]
+            existing_indexes = [idx['indexName'] for idx in response.get('indexes', [])]
 
-            if index_name in existing_indices:
+            if index_name in existing_indexes:
                 logger.debug(f"Vector index {index_name} already exists")
                 return
 
         except ClientError as e:
-            logger.warning(f"Could not list indices: {e}")
+            logger.warning(f"Could not list indexes: {e}")
 
         # Create index for this story if it doesn't exist
         try:
