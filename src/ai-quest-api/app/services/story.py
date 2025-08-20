@@ -202,11 +202,12 @@ class StoryService:
         # Inject memory context if available
         if memory_context:
             logger.debug(f"Using memory context: {memory_context[:200]}...")
-            # Add as system message at the beginning
-            llm_messages.insert(0, {
-                "role": "assistant",
-                "content": f"Use these relevant past events to maintain story continuity:\n{memory_context}"
-            })
+            # Find the last user message and prepend context to it
+            for i in range(len(llm_messages) - 1, -1, -1):
+                if llm_messages[i]["role"] == "user":
+                    llm_messages[i][
+                        "content"] = f"Relevant past events for context:\n{memory_context}\n\nCurrent action: {llm_messages[i]['content']}"
+                    break
 
         # Get response from LLM
         assistant_response = self._dm.send_messages(llm_messages)

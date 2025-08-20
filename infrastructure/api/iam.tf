@@ -46,7 +46,7 @@ data "aws_iam_policy_document" "api_lambda" {
       "s3vectors:GetIndex",
       "s3vectors:CreateIndex",
       "s3vectors:DeleteIndex",
-      "s3vectors:ListIndices"
+      "s3vectors:ListIndexes"
     ]
     resources = ["*"]
   }

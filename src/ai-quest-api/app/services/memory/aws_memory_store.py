@@ -42,6 +42,8 @@ class AWSS3MemoryStore(MemoryStoreInterface):
 
     def _ensure_story_index_exists(self, story_id: uuid.UUID):
         """Ensure vector index exists for the story"""
+        logger.warning(f"_ensure_story_index_exists")
+
         index_name = self._get_index_name(story_id)
 
         try:
@@ -171,6 +173,8 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         if not search_results:
             return "No previous context available."
 
+        logger.debug(f"search_results count: {len(search_results)}")
+
         # Format context for the DM
         context_parts = ["Previous relevant events in this story:"]
 
@@ -181,6 +185,8 @@ class AWSS3MemoryStore(MemoryStoreInterface):
             context_parts.append(
                 f"\n[Chapter {chapter.number}] (relevance: {result.relevance_score:.2f}): {chapter_summary}"
             )
+            logger.debug(f"chapter {chapter.number} relevance: {result.relevance_score}")
+            logger.debug(f"chapter {chapter.number} summary: {chapter_summary}")
 
         return "\n".join(context_parts)
 
