@@ -158,7 +158,6 @@ class StoryService:
         message_entities = self.message_repository.get_messages_by_story_id(story_id.bytes)
 
         # Get memory context if memory service is available
-        memory_context = ""
         if self.memory_service:
             # Get last chapter for current situation
             last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
@@ -171,12 +170,14 @@ class StoryService:
                 logger.warning(f"Failed to get memory context: {e}")
                 memory_context = ""
 
-            user_decision = f"Relevant past events for context:\n{memory_context}\n\nCurrent action: {user_decision}"
+            user_decision_with_context = f"Relevant past events for context:\n{memory_context}\n\nCurrent action: {user_decision}"
+        else:
+            user_decision_with_context = user_decision
 
         # Add user message to the story
         user_message_entity = MessageEntity(
             role="user",
-            content=user_decision,
+            content=user_decision_with_context,
             story_id=story_id.bytes,
             created_at=datetime.datetime.now(datetime.UTC),
         )
