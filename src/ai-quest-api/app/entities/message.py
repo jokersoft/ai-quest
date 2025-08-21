@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import Column, BINARY, DATETIME, String, Text
+from sqlalchemy import Column, BINARY, DATETIME, JSON, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -19,3 +19,4 @@ class Message(Base):
         default=datetime.datetime.now(datetime.UTC),
         nullable=False
     )
+    tags = Column(JSON, nullable=True)

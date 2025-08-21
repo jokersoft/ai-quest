@@ -18,7 +18,7 @@ class StoryRepository:
         self.db_session.refresh(story)
         return story
 
-    def get(self, story_id_bytes: bytes) -> Story:
+    def get(self, story_id_bytes: bytes) -> Story | None:
         return self.db_session.query(Story).filter(Story.id == story_id_bytes).first()
 
     def update_title(self, story_id_bytes: bytes, title: str) -> Story:

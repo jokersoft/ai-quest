@@ -11,6 +11,7 @@ class Chapter(BaseModel):
     choices: list[str]
     action: str
     outcome: str
+    summary: str | None = None
     number: int
 
     @field_validator('id', 'story_id', mode='before')

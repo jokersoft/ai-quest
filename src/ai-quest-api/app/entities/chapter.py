@@ -16,6 +16,7 @@ class Chapter(Base):
     choices = Column(JSON, nullable=False)
     action = Column(Text, nullable=False)
     outcome = Column(Text, nullable=False)
+    summary = Column(Text, nullable=True)
     number = Column(Integer, nullable=False)
     story_id = Column(BINARY(16), nullable=False, index=True)
 
@@ -38,6 +39,7 @@ class Chapter(Base):
             'choices': self.choices,
             'action': self.action,
             'outcome': self.outcome,
+            'summary': self.summary,
             'number': self.number,
             'story_id': str(self.story_id_uuid) if self.story_id else None
         }

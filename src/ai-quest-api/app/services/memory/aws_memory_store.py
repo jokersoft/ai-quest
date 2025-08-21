@@ -14,6 +14,7 @@ from app.services.memory.i_memory_store import MemoryStoreInterface, MemorySearc
 from app.entities.chapter import Chapter as ChapterEntity
 
 logger = logging.getLogger(__name__)
+DEFAULT_MAX_CHAPTERS = 5
 
 
 @dataclass
@@ -23,6 +24,10 @@ class S3VectorConfig:
     bedrock_model_id: str = "amazon.titan-embed-text-v2:0"
     dimension: int = 1024  # Default dimension for v2 (can be 256, 512, or 1024)
     region: str = "eu-central-1"
+
+@dataclass
+class MemoryMetadata:
+    chapter_number: int
 
 
 class AWSS3MemoryStore(MemoryStoreInterface):
@@ -104,6 +109,8 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         embedding_text = self._format_chapter_for_embedding(chapter)
         embedding = await self._generate_embedding(embedding_text)
 
+        logger.warning(f"embedding: {embedding}")
+
         # Create object key - using story_id prefix for organization
         object_key = f"stories/{story_id}/chapter-{chapter.number}.json"
 
@@ -113,7 +120,9 @@ class AWSS3MemoryStore(MemoryStoreInterface):
                 Bucket=self.config.bucket_name,
                 Key=object_key,
                 Body=embedding,
-                Metadata=chapter.to_json(),
+                Metadata=MemoryMetadata(
+                    chapter_number=chapter.number
+                ).__dict__,
             )
 
             logger.info(f"Stored memory for story {story_id}, chapter {chapter.number}")
@@ -148,7 +157,15 @@ class AWSS3MemoryStore(MemoryStoreInterface):
             logger.info(f"response: {response}")
 
             vectors = response.get('vectors', [])
-            # TODO: return list of vectors?
+            for vector in vectors:
+                metadata = vector.get('metadata', {})
+                chapter_number = metadata.get('chapter_number', 0)
+                relevance_score = vector.get('distance', 0.0)
+
+                results.append(MemorySearchResult(
+                    chapter_number=chapter_number,
+                    relevance_score=relevance_score
+                ))
 
             return results
 
@@ -158,51 +175,6 @@ class AWSS3MemoryStore(MemoryStoreInterface):
                 return []
             logger.error(f"Error searching memories: {e}")
             return []
-
-    async def get_story_context(self, story_id: uuid.UUID,
-                                current_situation: str,
-                                max_chapters: int = 3) -> str:
-        """Get formatted context for the story based on current situation"""
-        # Search for relevant chapters
-        search_results = await self.search_memories(
-            story_id=story_id,
-            query=current_situation,
-            max_results=max_chapters
-        )
-
-        if not search_results:
-            return "No previous context available."
-
-        logger.debug(f"search_results count: {len(search_results)}")
-
-        # Format context for the DM
-        context_parts = ["Previous relevant events in this story:"]
-
-        # Sort by chapter number to maintain chronological order
-        for result in sorted(search_results, key=lambda x: x.chapter_memory.chapter_number):
-            chapter = result.chapter
-            chapter_summary = self._summarize_chapter(chapter)
-            context_parts.append(
-                f"\n[Chapter {chapter.number}] (relevance: {result.relevance_score:.2f}): {chapter_summary}"
-            )
-            logger.debug(f"chapter {chapter.number} relevance: {result.relevance_score}")
-            logger.debug(f"chapter {chapter.number} summary: {chapter_summary}")
-
-        return "\n".join(context_parts)
-
-    def _summarize_chapter(self, chapter: ChapterEntity) -> str:
-        """Summarize chapter data (placeholder for future implementation)"""
-        # TODO: Implement actual summarization using Bedrock Claude
-        # For now, return a simple concatenation of key elements
-        parts = []
-
-        parts.append(f"Action: {chapter.action}")
-        outcome = chapter.outcome
-        if len(outcome) > 100:
-            outcome = outcome[:100] + "..."
-        parts.append(f"Outcome: {outcome}")
-
-        return " | ".join(parts) if parts else "Chapter content"
 
     async def delete_story_memories(self, story_id: uuid.UUID) -> None:
         """Delete all memories for a story"""

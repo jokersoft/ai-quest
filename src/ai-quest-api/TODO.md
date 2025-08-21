@@ -1,6 +1,9 @@
 TODO
 ====
 
+- lazy ChapterSummarizationService
+  - must generate a summary for the chapter and save it to nullable Chapter.summary
+  - DI: bedrock client 
 - basic actual test
 - Implement long term memory
   - https://www.philschmid.de/gemini-with-memory
@@ -9,9 +12,7 @@ TODO
   - embedding process
     - https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-bedrock-kb.html
   - https://aws.amazon.com/blogs/aws/introducing-amazon-s3-vectors-first-cloud-storage-with-native-vector-support-at-scale/
-- pagination
-  - "or meaningful window"
-  - wait until we hit limits or produce costs?
+
 
 Story data model:
 - short summary (mutable)
