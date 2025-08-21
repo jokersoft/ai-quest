@@ -71,7 +71,7 @@ class AWSS3MemoryStore(MemoryStoreInterface):
             self.s3vectors_client.create_index(
                 vectorBucketName=self.config.bucket_name,
                 indexName=index_name,
-                dataType='FLOAT32',
+                dataType='float32',
                 dimension=self.config.dimension,
                 distanceMetric='COSINE'
             )
