@@ -111,18 +111,24 @@ class AWSS3MemoryStore(MemoryStoreInterface):
 
         logger.warning(f"embedding: {embedding}")
 
-        # Create object key - using story_id prefix for organization
-        object_key = f"stories/{story_id}/chapter-{chapter.number}.json"
+        # Create vector key - unique identifier for this vector
+        vector_key = f"chapter-{chapter.number}"
 
-        # Add vector to the story-specific index
+        # Add vector to the story-specific index using put_vectors
         try:
-            self.s3vectors_client.put_object(
-                Bucket=self.config.bucket_name,
-                Key=object_key,
-                Body=embedding,
-                Metadata=MemoryMetadata(
-                    chapter_number=chapter.number
-                ).__dict__,
+            # Use put_vectors instead of put_object
+            self.s3vectors_client.put_vectors(
+                vectorBucketName=self.config.bucket_name,
+                indexName=self._get_index_name(story_id),
+                vectors=[
+                    {
+                        'key': vector_key,
+                        'data': {'float32': embedding},
+                        'metadata': MemoryMetadata(
+                            chapter_number=chapter.number
+                        ).__dict__
+                    }
+                ]
             )
 
             logger.info(f"Stored memory for story {story_id}, chapter {chapter.number}")
