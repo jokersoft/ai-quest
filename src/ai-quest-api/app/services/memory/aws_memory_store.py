@@ -71,7 +71,8 @@ class AWSS3MemoryStore(MemoryStoreInterface):
             self.s3vectors_client.create_index(
                 vectorBucketName=self.config.bucket_name,
                 indexName=index_name,
-                vectorDimension=self.config.dimension,
+                dataType='FLOAT32',
+                dimension=self.config.dimension,
                 distanceMetric='COSINE'
             )
             logger.info(f"Created vector index for story: {index_name}")
@@ -186,7 +187,29 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         """Delete all memories for a story"""
         index_name = self._get_index_name(story_id)
 
-        # First, delete the index
+        try:
+            # First, list all vectors in the index to get their keys
+            response = self.s3vectors_client.list_vectors(
+                vectorBucketName=self.config.bucket_name,
+                indexName=index_name
+            )
+
+            vector_keys = [v['key'] for v in response.get('vectors', [])]
+
+            # Delete all vectors if any exist
+            if vector_keys:
+                self.s3vectors_client.delete_vectors(
+                    vectorBucketName=self.config.bucket_name,
+                    indexName=index_name,
+                    keys=vector_keys
+                )
+                logger.info(f"Deleted {len(vector_keys)} vectors from index {index_name}")
+
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'ResourceNotFoundException':
+                logger.error(f"Error deleting vectors: {e}")
+
+        # Then delete the index
         try:
             self.s3vectors_client.delete_index(
                 vectorBucketName=self.config.bucket_name,
@@ -196,26 +219,3 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         except ClientError as e:
             if e.response['Error']['Code'] != 'ResourceNotFoundException':
                 logger.error(f"Error deleting story index: {e}")
-
-        # Delete all objects with the story prefix
-        try:
-            # List all objects for this story
-            response = self.s3vectors_client.list_objects_v2(
-                Bucket=self.config.bucket_name,
-                Prefix=f"stories/{story_id}/"
-            )
-
-            # Delete all objects
-            objects_to_delete = []
-            for obj in response.get('Contents', []):
-                objects_to_delete.append({'Key': obj['Key']})
-
-            if objects_to_delete:
-                self.s3vectors_client.delete_objects(
-                    Bucket=self.config.bucket_name,
-                    Delete={'Objects': objects_to_delete}
-                )
-
-            logger.info(f"Deleted all memories for story {story_id}")
-        except ClientError as e:
-            logger.error(f"Error deleting story memories: {e}")
