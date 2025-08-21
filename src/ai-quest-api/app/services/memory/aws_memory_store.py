@@ -73,7 +73,7 @@ class AWSS3MemoryStore(MemoryStoreInterface):
                 indexName=index_name,
                 dataType='float32',
                 dimension=self.config.dimension,
-                distanceMetric='COSINE'
+                distanceMetric='cosine'
             )
             logger.info(f"Created vector index for story: {index_name}")
         except ClientError as e:
