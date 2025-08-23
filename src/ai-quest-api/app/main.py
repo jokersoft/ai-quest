@@ -60,12 +60,12 @@ def stories(
 
 
 @app.post("/stories/init", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
-def init(
+async def init(
     user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
     db: Session = fastapi.Depends(db_client.get_db)
 ) -> FullStory:
-    story_service = StoryService(db)
-    new_story = story_service.init(user_info)
+    story_service = StoryService(db, memory_store)
+    new_story = await story_service.init(user_info)
     logger.debug(f"New Story {new_story.id} created")
     return new_story
 
@@ -78,17 +78,17 @@ def get(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)) ->
 
 
 @app.post("/stories/{story_id}/act", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
-def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
+async def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
     logger.debug(f"Acting inside Story {story_id}")
     story_service = StoryService(db, memory_store)
-    return story_service.act(story_id, user_decision.message)
+    return await story_service.act(story_id, user_decision.message)
 
 
 @app.delete("/stories/{story_id}", dependencies=[fastapi.Depends(security.verify_api_key)])
-def delete(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)):
+async def delete(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)):
     logger.debug(f"Deleting Story {story_id}")
     story_service = StoryService(db, memory_store)
-    story_service.delete(story_id)
+    await story_service.delete(story_id)
     return fastapi.responses.Response(status_code=204)
 
 

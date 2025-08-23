@@ -21,7 +21,7 @@ class StoryContext:
         self.memory_store = memory_store
         self.chapter_summarization_service = ChapterSummarizationService(db)
 
-    async def provide_context_async(self, story_id: uuid.UUID, user_decision: str) -> str:
+    async def provide_context(self, story_id: uuid.UUID, user_decision: str) -> str:
         """Async version that can safely call memory store without blocking main thread"""
         last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
         current_situation = f"""{last_chapter.situation}

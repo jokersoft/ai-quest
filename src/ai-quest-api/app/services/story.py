@@ -1,7 +1,5 @@
-import asyncio
 import datetime
 import logging
-import threading
 from typing import Optional
 import uuid
 
@@ -58,18 +56,7 @@ class StoryService:
 
         return full_story
 
-    def _run_async_in_thread(self, coro):
-        """Helper to run async coroutine in a separate thread"""
-        def target():
-            try:
-                asyncio.run(coro)
-            except Exception as e:
-                logger.warning(f"Async operation failed: {e}")
-
-        thread = threading.Thread(target=target, daemon=True)
-        thread.start()
-
-    def init(self, user_info: UserInfo) -> FullStoryResponse:
+    async def init(self, user_info: UserInfo) -> FullStoryResponse:
         # Story init
         story_entity = StoryEntity(user_id=user_info.user_id.bytes)
         saved_story = self.story_repository.add(story_entity)
@@ -95,13 +82,13 @@ class StoryService:
 
         # Store in memory service if available
         if self.memory_service:
-            # Fire and forget - don't block story creation
-            self._run_async_in_thread(
-                self.memory_service.add_memory(
+            try:
+                await self.memory_service.add_memory(
                     story_id=story_id_uuid,
                     chapter=new_chapter
                 )
-            )
+            except Exception as e:
+                logger.warning(f"Failed to store memory: {e}")
 
         # Save chat messages
         logger.debug(f"dm_intro_message.narration: {dm_intro_message.narration}")
@@ -148,7 +135,7 @@ class StoryService:
         ]
         return stories
 
-    def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
+    async def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
         # Get existing story
         story_entity = self.story_repository.get(story_id.bytes)
         if not story_entity:
@@ -158,21 +145,19 @@ class StoryService:
         message_entities = self.message_repository.get_messages_by_story_id(story_id.bytes)
 
         # Get memory context if memory service is available
+        memory_context = ""
         if self.memory_service:
-            # Get last chapter for current situation
-            last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
-            current_situation = last_chapter.situation if last_chapter else user_decision
-
-            # Get relevant memories synchronously
             try:
-                memory_context = self.story_context_service.provide_context_async(story_id, current_situation)
+                # Get last chapter for current situation
+                last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
+                current_situation = last_chapter.situation if last_chapter else user_decision
+
+                # Get relevant memories
+                memory_context = await self.story_context_service.provide_context(story_id, current_situation)
             except Exception as e:
                 logger.warning(f"Failed to get memory context: {e}")
-                memory_context = ""
 
-            user_decision_with_context = f"Relevant past events for context:\n{memory_context}\n\nCurrent action: {user_decision}"
-        else:
-            user_decision_with_context = user_decision
+        user_decision_with_context = f"Relevant past events for context:\n{memory_context}\n\nCurrent action: {user_decision}" if memory_context else user_decision
 
         # Add user message to the story
         user_message_entity = MessageEntity(
@@ -207,13 +192,13 @@ class StoryService:
 
         # Store in memory service if available
         if self.memory_service:
-            # Fire and forget - don't block response
-            self._run_async_in_thread(
-                self.memory_service.add_memory(
+            try:
+                await self.memory_service.add_memory(
                     story_id,
                     chapter=new_chapter,
                 )
-            )
+            except Exception as e:
+                logger.warning(f"Failed to store memory: {e}")
 
         # Save chat messages
         logger.debug(f"last_message narration: {assistant_response.narration}")
@@ -246,13 +231,13 @@ class StoryService:
 
         return full_story
 
-    def delete(self, story_id: uuid.UUID) -> None:
+    async def delete(self, story_id: uuid.UUID) -> None:
         """Delete story and associated memories"""
         self.story_repository.delete(story_id.bytes)
 
         # Clean up memories if service is available
         if self.memory_service:
-            # Fire and forget cleanup
-            self._run_async_in_thread(
-                self.memory_service.delete_story_memories(story_id)
-            )
+            try:
+                await self.memory_service.delete_story_memories(story_id)
+            except Exception as e:
+                logger.warning(f"Failed to delete story memories: {e}")
