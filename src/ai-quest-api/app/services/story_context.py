@@ -46,7 +46,7 @@ class StoryContext:
         context_parts = ["Previous relevant events in this story:"]
 
         # Sort by chapter number to maintain chronological order
-        for result in sorted(search_results, key=lambda x: x.chapter_memory.chapter_number):
+        for result in sorted(search_results, key=lambda search_result: search_result.chapter_number):
             chapter = self.chapter_repository.get_chapter(story_id.bytes, result.chapter_number)
             chapter_summary = self.chapter_summarization_service.summarize_chapter(chapter)
             context_parts.append(
