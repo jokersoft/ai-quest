@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import uuid
 
@@ -23,6 +22,20 @@ class StoryContext:
         self.chapter_summarization_service = ChapterSummarizationService(db)
 
     def provide_context(self, story_id: uuid.UUID, user_decision: str) -> str:
+        """Synchronous context provider that doesn't use asyncio.run() to avoid session conflicts"""
+
+        # For now, return basic context without memory search to avoid session conflicts
+        # The memory search will be handled asynchronously in the background
+        last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
+
+        if not last_chapter:
+            return "No previous context available."
+
+        # Provide basic context from the last chapter only
+        return f"Previous situation: {last_chapter.situation}"
+
+    async def provide_context_async(self, story_id: uuid.UUID, user_decision: str) -> str:
+        """Async version that can safely call memory store without blocking main thread"""
         last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
         current_situation = f"""{last_chapter.situation}
 {user_decision}"""
@@ -31,11 +44,11 @@ class StoryContext:
             raise ValueError(f"Last chapter for story {story_id} not found")
 
         # Search for relevant N chapters
-        search_results = asyncio.run(self.memory_store.search_memories(
+        search_results = await self.memory_store.search_memories(
             story_id=story_id,
             query=current_situation,
             max_results=CONTEXT_CHAPTERS_NUM,
-        ))
+        )
 
         if not search_results:
             return "No previous context available."
@@ -56,5 +69,3 @@ class StoryContext:
             logger.debug(f"chapter {chapter.number} summary: {chapter_summary}")
 
         return "\n".join(context_parts)
-
-

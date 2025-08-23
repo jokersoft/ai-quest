@@ -165,7 +165,7 @@ class StoryService:
 
             # Get relevant memories synchronously
             try:
-                memory_context = self.story_context_service.provide_context(story_id, current_situation)
+                memory_context = self.story_context_service.provide_context_async(story_id, current_situation)
             except Exception as e:
                 logger.warning(f"Failed to get memory context: {e}")
                 memory_context = ""
