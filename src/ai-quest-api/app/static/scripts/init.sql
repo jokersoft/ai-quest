@@ -21,6 +21,7 @@ CREATE TABLE messages (
     content TEXT NOT NULL,
     story_id BINARY(16) NOT NULL,
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tags JSON,
     FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE
 );
 
@@ -31,6 +32,7 @@ CREATE TABLE chapters (
     choices JSON NOT NULL,
     action TEXT NOT NULL,
     outcome TEXT NOT NULL,
+    summary TEXT,
     number INTEGER NOT NULL,
     story_id BINARY(16) NOT NULL,
     INDEX idx_story_id (story_id),

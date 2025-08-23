@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import Optional
 import uuid
 
 from sqlalchemy.orm import Session
@@ -11,6 +12,8 @@ from app.repositories.chapter import ChapterRepository
 from app.repositories.story import StoryRepository
 from app.repositories.message import MessageRepository
 from app.services import dm
+from app.services.memory.i_memory_store import MemoryStoreInterface
+from app.services.story_context import StoryContext
 from app.services.user import UserInfo
 from app.schemas.story import Story as StoryResponse, FullStory as FullStoryResponse
 
@@ -20,45 +23,50 @@ logger.setLevel(logging.DEBUG)
 INITIAL_USER_MESSAGE = "Wake up!"  # Initial message to start the story
 
 class StoryService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, memory_service: Optional[MemoryStoreInterface] = None):
         self.db = db
-        self._dm = dm.DungeonMaster()
-        self._story_repository = StoryRepository(db)
-        self._message_repository = MessageRepository(db)
-        self._chapter_repository = ChapterRepository(db)
+        self.dm = dm.DungeonMaster()
+        self.story_repository = StoryRepository(db)
+        self.message_repository = MessageRepository(db)
+        self.chapter_repository = ChapterRepository(db)
+        self.memory_service = memory_service
+        self.story_context_service = StoryContext(db, memory_service)
 
     def get(self, story_id: uuid.UUID) -> FullStoryResponse:
         # Get story by ID
-        story_entity = self._story_repository.get(story_id.bytes)
+        story_entity = self.story_repository.get(story_id.bytes)
         if not story_entity:
             raise ValueError(f"Story with ID {story_id} not found")
 
         # Get the last chapter to extract current choices
-        last_chapter = self._chapter_repository.get_last_chapter(story_id.bytes)
-        current_choices = last_chapter.choices if last_chapter else []
+        last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
+        current_choices = last_chapter.choices_list if last_chapter else []
+
+        # Get chapters and convert them to proper format
+        chapter_entities = self.chapter_repository.get_chapters_by_story_id(story_id.bytes)
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=story_entity.id,
             user_id=story_entity.user_id,
             title=story_entity.title,
-            chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
+            chapters=chapter_entities,
             current_choices=current_choices,
         )
 
         return full_story
 
-    def init(self, user_info: UserInfo) -> FullStoryResponse:
+    async def init(self, user_info: UserInfo) -> FullStoryResponse:
         # Story init
         story_entity = StoryEntity(user_id=user_info.user_id.bytes)
-        saved_story = self._story_repository.add(story_entity)
+        saved_story = self.story_repository.add(story_entity)
         story_id_uuid = uuid.UUID(bytes=saved_story.id)
         logger.debug(f"Story.id: {story_id_uuid}")
         logger.info(f"Story created with ID: {story_id_uuid}")
 
         # Get intro message from the LLM
         messages = [{"role": "user", "content": INITIAL_USER_MESSAGE}]
-        dm_intro_message = self._dm.send_messages(messages)
+        dm_intro_message = self.dm.send_messages(messages)
 
         # Record the 1st chapter
         new_chapter = ChapterEntity(
@@ -70,7 +78,17 @@ class StoryService:
             number=1,
             story_id=saved_story.id
         )
-        self._chapter_repository.add(new_chapter)
+        self.chapter_repository.add(new_chapter)
+
+        # Store in memory service if available
+        if self.memory_service:
+            try:
+                await self.memory_service.add_memory(
+                    story_id=story_id_uuid,
+                    chapter=new_chapter
+                )
+            except Exception as e:
+                logger.warning(f"Failed to store memory: {e}")
 
         # Save chat messages
         logger.debug(f"dm_intro_message.narration: {dm_intro_message.narration}")
@@ -78,7 +96,7 @@ class StoryService:
 
         # Update story title
         story_title = dm_intro_message.narration[:256]
-        self._story_repository.update_title(saved_story.id, story_title)
+        self.story_repository.update_title(saved_story.id, story_title)
 
         # Save new messages in the repository
         message_entities = []
@@ -86,15 +104,18 @@ class StoryService:
             message_entity = MessageEntity(
                 role=message.get("role"), content=message.get("content"), story_id=saved_story.id
             )
-            self._message_repository.add(message_entity)
+            self.message_repository.add(message_entity)
             message_entities.append(message_entity)
+
+        # Get chapters and convert them to proper format
+        chapter_entities = self.chapter_repository.get_chapters_by_story_id(saved_story.id)
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=saved_story.id,
             user_id=user_info.user_id,
             title=story_title,
-            chapters=self._chapter_repository.get_chapters_by_story_id(saved_story.id),
+            chapters=chapter_entities,
             current_choices=dm_intro_message.choices,
         )
 
@@ -102,7 +123,7 @@ class StoryService:
 
     def list(self, user_info: UserInfo) -> list[StoryResponse]:
         # Fetch stories for the user
-        story_entities = self._story_repository.list_by_user_id(user_info.user_id.bytes)
+        story_entities = self.story_repository.list_by_user_id(user_info.user_id.bytes)
         # Convert to schema DTOs
         stories = [
             StoryResponse(
@@ -114,19 +135,34 @@ class StoryService:
         ]
         return stories
 
-    def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
+    async def act(self, story_id: uuid.UUID, user_decision: str) -> FullStoryResponse:
         # Get existing story
-        story_entity = self._story_repository.get(story_id.bytes)
+        story_entity = self.story_repository.get(story_id.bytes)
         if not story_entity:
             raise ValueError(f"Story with ID {story_id} not found")
 
         # Get existing messages
-        message_entities = self._message_repository.get_messages_by_story_id(story_id.bytes)
+        message_entities = self.message_repository.get_messages_by_story_id(story_id.bytes)
+
+        # Get memory context if memory service is available
+        memory_context = ""
+        if self.memory_service:
+            try:
+                # Get last chapter for current situation
+                last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
+                current_situation = last_chapter.situation if last_chapter else user_decision
+
+                # Get relevant memories
+                memory_context = await self.story_context_service.provide_context(story_id, current_situation)
+            except Exception as e:
+                logger.warning(f"Failed to get memory context: {e}")
+
+        user_decision_with_context = f"Relevant past events for context:\n{memory_context}\n\nCurrent action: {user_decision}" if memory_context else user_decision
 
         # Add user message to the story
         user_message_entity = MessageEntity(
             role="user",
-            content=user_decision,
+            content=user_decision_with_context,
             story_id=story_id.bytes,
             created_at=datetime.datetime.now(datetime.UTC),
         )
@@ -139,23 +175,34 @@ class StoryService:
         ]
 
         # Get response from LLM
-        assistant_response = self._dm.send_messages(llm_messages)
+        assistant_response = self.dm.send_messages(llm_messages)
 
-        # Record the 1st chapter
+        # Record the new chapter
+        new_chapter_number = self.chapter_repository.get_max_chapter_number(story_id.bytes) + 1
         new_chapter = ChapterEntity(
             narration=assistant_response.narration,
             situation=assistant_response.situation,
             choices=assistant_response.choices,
             action=user_decision,
             outcome=assistant_response.outcome,
-            number=self._chapter_repository.get_max_chapter_number(story_id.bytes) + 1,
+            number=new_chapter_number,
             story_id=story_id.bytes,
         )
-        self._chapter_repository.add(new_chapter)
+        self.chapter_repository.add(new_chapter)
+
+        # Store in memory service if available
+        if self.memory_service:
+            try:
+                await self.memory_service.add_memory(
+                    story_id,
+                    chapter=new_chapter,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to store memory: {e}")
 
         # Save chat messages
         logger.debug(f"last_message narration: {assistant_response.narration}")
-        llm_messages.append({"role": "assistant", "content": assistant_response})
+        llm_messages.append({"role": "assistant", "content": assistant_response.to_string()})
 
         # Add LLM response to the story
         assistant_message_entity = MessageEntity(
@@ -167,19 +214,30 @@ class StoryService:
         message_entities.append(assistant_message_entity)
 
         # Save when we have both messages
-        self._message_repository.add(user_message_entity)
-        self._message_repository.add(assistant_message_entity)
+        self.message_repository.add(user_message_entity)
+        self.message_repository.add(assistant_message_entity)
+
+        # Convert to response DTOs with proper UUID conversion
+        chapter_entities = self.chapter_repository.get_chapters_by_story_id(story_id.bytes)
 
         # Convert to response DTOs
         full_story = FullStoryResponse(
             id=story_entity.id,
             user_id=story_entity.user_id,
             title=story_entity.title,
-            chapters=self._chapter_repository.get_chapters_by_story_id(story_id.bytes),
+            chapters=chapter_entities,
             current_choices=assistant_response.choices,
         )
 
         return full_story
 
-    def delete(self, story_id: uuid.UUID) -> None:
-        self._story_repository.delete(story_id.bytes)
+    async def delete(self, story_id: uuid.UUID) -> None:
+        """Delete story and associated memories"""
+        self.story_repository.delete(story_id.bytes)
+
+        # Clean up memories if service is available
+        if self.memory_service:
+            try:
+                await self.memory_service.delete_story_memories(story_id)
+            except Exception as e:
+                logger.warning(f"Failed to delete story memories: {e}")

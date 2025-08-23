@@ -5,14 +5,16 @@ import uuid
 
 class Chapter(BaseModel):
     id: Union[str, bytes, uuid.UUID] = Field(alias='id')
+    story_id: Union[str, bytes, uuid.UUID] = Field(alias='story_id')
     narration: str
     situation: str
     choices: list[str]
     action: str
     outcome: str
+    summary: str | None = None
     number: int
 
-    @field_validator('id', mode='before')
+    @field_validator('id', 'story_id', mode='before')
     def convert_id(cls, v: Union[bytes, uuid.UUID, str]) -> str:
         if isinstance(v, bytes):
             return str(uuid.UUID(bytes=v))

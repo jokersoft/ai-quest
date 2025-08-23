@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.clients import llm_client, db_client
 from app.services import security
 from app.services import user
+from app.services.memory.aws_memory_store import AWSS3MemoryStore, S3VectorConfig
 from app.services.story import StoryService
 from app.schemas.story import Story, FullStory
 from app.schemas.user_decision import UserDecision
@@ -27,7 +28,14 @@ app.add_middleware(
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+# Configure LLM client
 llm_client = llm_client.create_client()
+
+# Configure memory client
+memory_store_config = S3VectorConfig(
+    bucket_name="ai-quest-memory",
+)
+memory_store = AWSS3MemoryStore(memory_store_config)
 
 
 @app.get("/health")
@@ -52,12 +60,12 @@ def stories(
 
 
 @app.post("/stories/init", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
-def init(
+async def init(
     user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
     db: Session = fastapi.Depends(db_client.get_db)
 ) -> FullStory:
-    story_service = StoryService(db)
-    new_story = story_service.init(user_info)
+    story_service = StoryService(db, memory_store)
+    new_story = await story_service.init(user_info)
     logger.debug(f"New Story {new_story.id} created")
     return new_story
 
@@ -70,17 +78,17 @@ def get(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)) ->
 
 
 @app.post("/stories/{story_id}/act", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
-def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
+async def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
     logger.debug(f"Acting inside Story {story_id}")
-    story_service = StoryService(db)
-    return story_service.act(story_id, user_decision.message)
+    story_service = StoryService(db, memory_store)
+    return await story_service.act(story_id, user_decision.message)
 
 
 @app.delete("/stories/{story_id}", dependencies=[fastapi.Depends(security.verify_api_key)])
-def delete(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)):
+async def delete(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)):
     logger.debug(f"Deleting Story {story_id}")
-    story_service = StoryService(db)
-    story_service.delete(story_id)
+    story_service = StoryService(db, memory_store)
+    await story_service.delete(story_id)
     return fastapi.responses.Response(status_code=204)
 
 

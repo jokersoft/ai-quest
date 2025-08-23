@@ -1,4 +1,4 @@
 name         = "ai-quest"
 region       = "eu-central-1"
-image_tag    = "7e54ad0"
+image_tag    = "a689546"
 app_env      = "prod"

@@ -12,8 +12,9 @@ class ChapterRepository:
         self.db_session.commit()
         return chapter.id
 
-    def get_chapter(self, chapter_id: str) -> Chapter:
-        return self.db_session.query(Chapter).filter(Chapter.id == chapter_id).first()
+    def get_chapter(self, story_id_bytes: bytes, chapter_number: int) -> Chapter:
+        return self.db_session.query(Chapter).filter(Chapter.story_id == story_id_bytes).filter(
+            Chapter.number == chapter_number).first()
 
     def get_chapters_by_story_id(self, story_id_bytes: bytes) -> list[Chapter]:
         return self.db_session.query(Chapter).filter(Chapter.story_id == story_id_bytes).order_by(
@@ -27,3 +28,8 @@ class ChapterRepository:
         max_chapter = self.db_session.query(Chapter).filter(Chapter.story_id == story_id_bytes).order_by(
             Chapter.number.desc()).first()
         return max_chapter.number if max_chapter else 0
+
+    def update(self, chapter: Chapter) -> Chapter:
+        self.db_session.merge(chapter)
+        self.db_session.commit()
+        return chapter
