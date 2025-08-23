@@ -42,7 +42,7 @@ class StoryService:
 
         # Get the last chapter to extract current choices
         last_chapter = self.chapter_repository.get_last_chapter(story_id.bytes)
-        current_choices = last_chapter.choices if last_chapter else []
+        current_choices = last_chapter.choices_list if last_chapter else []
 
         # Get chapters and convert them to proper format
         chapter_entities = self.chapter_repository.get_chapters_by_story_id(story_id.bytes)

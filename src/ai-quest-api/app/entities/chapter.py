@@ -30,13 +30,26 @@ class Chapter(Base):
         """Convert binary story_id to UUID object"""
         return uuid.UUID(bytes=self.story_id) if self.story_id else None
 
+    @property
+    def choices_list(self) -> list[str]:
+        """Convert choices to proper list format"""
+        if isinstance(self.choices, str):
+            try:
+                return json.loads(self.choices)
+            except (json.JSONDecodeError, TypeError):
+                return []
+        elif isinstance(self.choices, list):
+            return self.choices
+        else:
+            return []
+
     def to_dict(self):
         """Make the entity directly serializable"""
         return {
             'id': str(self.id_uuid) if self.id else None,
             'narration': self.narration,
             'situation': self.situation,
-            'choices': self.choices,
+            'choices': self.choices_list,
             'action': self.action,
             'outcome': self.outcome,
             'summary': self.summary,
