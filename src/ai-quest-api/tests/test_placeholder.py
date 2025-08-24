@@ -1,6 +1,9 @@
 from unittest import mock, skip
 from fastapi.testclient import TestClient
-from app.main import app
+
+# Mock boto3 before importing the app
+with mock.patch('boto3.resource'):
+    from app.main import app
 
 client = TestClient(app)
 
