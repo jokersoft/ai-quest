@@ -12,7 +12,7 @@ logger.setLevel(logging.DEBUG)
 
 class ChapterSummarizationService:
     def __init__(self, db: Session):
-        self.llm_client = llm_client.create_client(PromptProvider().get("dm_summarize"))
+        self.llm_client = llm_client.create_client(PromptProvider().get("dm_summarize"), "anthropic")
         self.chapter_repository = ChapterRepository(db)
 
     def summarize_chapter(self, chapter: Chapter) -> str:

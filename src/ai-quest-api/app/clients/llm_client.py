@@ -27,6 +27,10 @@ class LLMClient(ABC):
 
 
 class AnthropicClient(LLMClient):
+    """
+    https://github.com/anthropics/anthropic-sdk-python
+    https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts
+    """
     def __init__(self, system_prompt: str):
         super().__init__()
         self.client = anthropic.Anthropic(
@@ -68,8 +72,17 @@ class AnthropicClient(LLMClient):
 
             return response.content[0].text
 
+        except anthropic.APIConnectionError as e:
+            logger.exception("The server could not be reached", e.__cause__)
+            raise e
+        except anthropic.RateLimitError as e:
+            logger.exception("The rate limit was exceeded", e.__cause__)
+            raise e
+        except anthropic.APIStatusError as e:
+            logger.exception("The API returned an error", e.__cause__)
+            raise e
         except Exception as e:
-            logger.exception("Error in Anthropic API call", exc_info=True)
+            logger.exception("An unexpected error occurred", e.__cause__)
             raise e
 
     def send_messages(self, messages: list[dict], tools: list[dict] = None, tool_choice: dict = None) -> str:
