@@ -1,9 +1,13 @@
 TODO
 ====
 
-- lazy ChapterSummarizationService
-  - must generate a summary for the chapter and save it to nullable Chapter.summary
-  - DI: bedrock client 
+- count tokens used
+- tune context
+  - messages
+  - summarization
+  - dialogue continuity
+- end_story(death)
+  - is_story_over: bool
 - basic actual test
 - Implement long term memory
   - https://www.philschmid.de/gemini-with-memory

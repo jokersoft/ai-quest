@@ -10,6 +10,7 @@ from app.clients import llm_client, db_client
 from app.services import security
 from app.services import user
 from app.services.memory.aws_memory_store import AWSS3MemoryStore, S3VectorConfig
+from app.services.prompt_provider import PromptProvider
 from app.services.story import StoryService
 from app.schemas.story import Story, FullStory
 from app.schemas.user_decision import UserDecision
@@ -29,7 +30,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # Configure LLM client
-llm_client = llm_client.create_client()
+llm_client = llm_client.create_client(PromptProvider().get("default"))
 
 # Configure memory client
 memory_store_config = S3VectorConfig(
