@@ -15,10 +15,6 @@ from app.clients import config
 logger = logging.getLogger(__name__)
 config = config.Config()
 
-# Initialize AWS clients
-dynamodb = boto3.resource('dynamodb')
-bedrock_client = boto3.client('bedrock-runtime')
-
 
 class DynamoDBTokenTracker:
     """
@@ -31,6 +27,9 @@ class DynamoDBTokenTracker:
     """
 
     def __init__(self, table_name: str = None):
+        # Initialize AWS client
+        dynamodb = boto3.resource('dynamodb')
+
         self.table_name = table_name or os.environ.get('TOKEN_TRACKING_TABLE', 'llm-token-usage')
         self.table = dynamodb.Table(self.table_name)
 
