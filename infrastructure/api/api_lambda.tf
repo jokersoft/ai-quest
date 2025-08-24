@@ -12,6 +12,7 @@ resource "aws_lambda_function" "api_lambda" {
       DATABASE_URL = local.secrets["db-credentials"]
       API_KEY      = local.secrets["api-key"]
       ANTHROPIC_API_KEY = local.secrets["anthropic-api-key"]
+      TOKEN_TRACKING_TABLE = aws_dynamodb_table.llm_token_usage.name
 
       # configs
       IS_API_KEY_AUTH_DISABLED = 1  # Using gateway auth instead

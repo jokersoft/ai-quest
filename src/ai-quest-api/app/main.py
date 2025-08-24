@@ -30,7 +30,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # Configure LLM client
-llm_client = llm_client.create_client(PromptProvider().get("default"))
+llm_client = llm_client.create_client(PromptProvider().get("default"), "anthropic")
 
 # Configure memory client
 memory_store_config = S3VectorConfig(

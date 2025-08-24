@@ -28,7 +28,7 @@ class DMResponse:
 
 class DungeonMaster:
     def __init__(self):
-        self.llm_client = llm_client.create_client(PromptProvider().get("dungeon_master"))
+        self.llm_client = llm_client.create_client(PromptProvider().get("dungeon_master"), "anthropic")
         self.story_response_tool = {
             "name": "story_response",
             "description": "Respond with the story outcome and next situation",

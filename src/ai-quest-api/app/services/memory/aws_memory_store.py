@@ -10,6 +10,7 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 
+from app.clients.token_tracker import DynamoDBTokenTracker
 from app.services.memory.i_memory_store import MemoryStoreInterface, MemorySearchResult
 from app.entities.chapter import Chapter as ChapterEntity
 
@@ -40,6 +41,8 @@ class AWSS3MemoryStore(MemoryStoreInterface):
         self.s3vectors_client = boto3.client('s3vectors', region_name=config.region)
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime.html
         self.bedrock_client = boto3.client('bedrock-runtime', region_name=config.region)
+
+        self.token_tracker = DynamoDBTokenTracker()
 
     def _get_index_name(self, story_id: uuid.UUID) -> str:
         """Get index name for a specific story"""
@@ -92,6 +95,29 @@ class AWSS3MemoryStore(MemoryStoreInterface):
             )
 
             result = json.loads(response['body'].read())
+
+            # Token tracking
+            # Estimate tokens for Titan Embed (roughly 1 token per 4 characters)
+            estimated_tokens = max(1, len(text) // 4)
+
+            # Check if actual token count is in response headers
+            actual_tokens = estimated_tokens
+            if 'ResponseMetadata' in response:
+                headers = response.get('ResponseMetadata', {}).get('HTTPHeaders', {})
+                if 'x-amzn-bedrock-input-token-count' in headers:
+                    actual_tokens = int(headers['x-amzn-bedrock-input-token-count'])
+
+            # Track token usage
+            self.token_tracker.track_usage(
+                service="bedrock",
+                model=self.config.bedrock_model_id,
+                input_tokens=actual_tokens,
+                output_tokens=0,  # Embeddings don't have output tokens
+                metadata={
+                    "text_length": len(text),
+                }
+            )
+
             return result['embedding']
         except Exception as e:
             logger.error(f"Error generating embedding: {e}")
