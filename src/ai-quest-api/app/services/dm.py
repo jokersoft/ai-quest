@@ -2,6 +2,7 @@ import json
 import logging
 
 from app.clients import llm_client
+from app.services.prompt_provider import PromptProvider
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -27,7 +28,7 @@ class DMResponse:
 
 class DungeonMaster:
     def __init__(self):
-        self.llm_client = llm_client.create_client()
+        self.llm_client = llm_client.create_client(PromptProvider().get("dungeon_master"))
         self.story_response_tool = {
             "name": "story_response",
             "description": "Respond with the story outcome and next situation",

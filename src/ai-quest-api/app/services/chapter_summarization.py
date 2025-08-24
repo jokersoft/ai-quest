@@ -5,13 +5,14 @@ from sqlalchemy.orm import Session
 from app.clients import llm_client
 from app.entities.chapter import Chapter
 from app.repositories.chapter import ChapterRepository
+from app.services.prompt_provider import PromptProvider
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 class ChapterSummarizationService:
     def __init__(self, db: Session):
-        self.llm_client = llm_client.create_client()
+        self.llm_client = llm_client.create_client(PromptProvider().get("dm_summarize"))
         self.chapter_repository = ChapterRepository(db)
 
     def summarize_chapter(self, chapter: Chapter) -> str:

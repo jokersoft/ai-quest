@@ -4,7 +4,6 @@ import logging
 
 import anthropic
 from app.clients import config
-from app.services.prompt_provider import PromptProvider
 
 logger = logging.getLogger(__name__)
 config = config.Config()
@@ -25,7 +24,7 @@ class AnthropicClient(LLMClient):
     https://github.com/anthropics/anthropic-sdk-python
     https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts
     """
-    def __init__(self):
+    def __init__(self, system_prompt: str):
         self.client = anthropic.Anthropic(
             api_key=config.anthropic_api_key,
             max_retries=0,
@@ -33,38 +32,7 @@ class AnthropicClient(LLMClient):
         )
         self.model = config.anthropic_model
         self.max_tokens = config.anthropic_max_tokens
-        self.system_prompt = PromptProvider().get("system")
-        # Define the tool for structured responses
-        self.story_response_tool = {
-            "name": "story_response",
-            "description": "Respond with the story outcome and next situation",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "narration": {
-                        "type": "string",
-                        "description": "A dry, sardonic comment or flavor text"
-                    },
-                    "outcome": {
-                        "type": "string",
-                        "description": "Description of what happened as a result of the player's action"
-                    },
-                    "situation": {
-                        "type": "string",
-                        "description": "The current situation the player faces"
-                    },
-                    "choices": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of choices available to the player",
-                        "minItems": 3,
-                        "maxItems": 6
-                    }
-                },
-                "required": ["narration", "outcome", "situation", "choices"]
-            }
-        }
-
+        self.system_prompt = system_prompt
 
     def ask(self, question: str) -> str:
         try:
@@ -133,9 +101,9 @@ class AnthropicClient(LLMClient):
             raise e
 
 
-def create_client() -> LLMClient:
+def create_client(system_prompt: str) -> LLMClient:
     if config.llm_client_type == "anthropic":
-        return AnthropicClient()
+        return AnthropicClient(system_prompt)
     # Add more conditions here for other clients
     else:
         raise ValueError(f"Unsupported LLM client type: {config.llm_client_type}")
