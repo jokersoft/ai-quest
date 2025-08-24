@@ -6,7 +6,6 @@ import json
 import logging
 import datetime
 from decimal import Decimal
-from typing import Dict, Any, List, Literal
 import uuid
 import os
 
@@ -36,8 +35,8 @@ class DynamoDBTokenTracker:
         self.table = dynamodb.Table(self.table_name)
 
     def track_usage(self, service: str, model: str, input_tokens: int,
-                    output_tokens: int, metadata: Dict[str, Any] = None,
-                    request_id: str = None, user_id: str = None) -> Dict[str, Any]:
+                    output_tokens: int, metadata: dict = None,
+                    request_id: str = None, user_id: str = None) -> dict:
         """Store token usage in DynamoDB with enhanced metadata"""
 
         now = datetime.datetime.now(datetime.UTC)
@@ -147,7 +146,7 @@ class DynamoDBTokenTracker:
         logger.warning(f"Unknown model for pricing: {service}/{model}")
         return Decimal('0')
 
-    def get_daily_usage(self, service: str, date: str) -> List[Dict]:
+    def get_daily_usage(self, service: str, date: str) -> list[dict]:
         """Query usage for a specific service and date"""
 
         response = self.table.query(
@@ -159,7 +158,7 @@ class DynamoDBTokenTracker:
 
         return response.get('Items', [])
 
-    def get_usage_by_model(self, model: str, start_date: str, end_date: str) -> List[Dict]:
+    def get_usage_by_model(self, model: str, start_date: str, end_date: str) -> list[dict]:
         """Query usage for a specific model across date range (requires GSI)"""
 
         try:
@@ -180,7 +179,7 @@ class DynamoDBTokenTracker:
             logger.error(f"Error querying by model (GSI might not exist): {e}")
             return []
 
-    def get_usage_summary(self, service: str, start_date: str, end_date: str) -> Dict:
+    def get_usage_summary(self, service: str, start_date: str, end_date: str) -> dict:
         """Get aggregated usage summary for a date range"""
 
         total_input = 0
