@@ -26,6 +26,7 @@ data "aws_iam_policy_document" "api_lambda" {
     resources = ["*"]
   }
 
+  # Memory embedding
   statement {
     actions = [
       "bedrock:InvokeModel"
@@ -37,6 +38,7 @@ data "aws_iam_policy_document" "api_lambda" {
     ]
   }
 
+  # Memory storage
   statement {
     actions = [
       "s3vectors:PutVectors",
@@ -49,6 +51,20 @@ data "aws_iam_policy_document" "api_lambda" {
       "s3vectors:ListIndexes"
     ]
     resources = ["*"]
+  }
+
+  # Token usage tracking
+  statement {
+    actions = [
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:GetItem",
+      "dynamodb:BatchWriteItem"
+    ]
+    resources = [
+      aws_dynamodb_table.llm_token_usage.arn,
+      "${aws_dynamodb_table.llm_token_usage.arn}/index/*"
+    ]
   }
 }
 
