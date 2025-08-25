@@ -366,6 +366,33 @@
             color: #666;
         }
 
+        /* Completed story styling */
+        .completed-story {
+            color: #666 !important;
+            font-style: italic;
+        }
+
+        .completed-badge {
+            color: #666;
+            font-size: 0.8em;
+            font-weight: normal;
+        }
+
+        .completed-chapter {
+            opacity: 0.7;
+        }
+
+        .completed-chapter .chapter-number {
+            color: #666;
+        }
+
+        /* Ensure disabled state is visible */
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #666 !important;
+        }
+
         #userInfo {
             display: flex;
             align-items: center;
@@ -433,6 +460,7 @@
         let authToken = null;
         let currentStoryId = null;
         let isLoading = false;
+        let currentStoryCompleted = false;
 
         // API configuration
         const API_BASE_URL = 'https://at3hga4otd.execute-api.eu-central-1.amazonaws.com/dev/quest';
@@ -607,9 +635,18 @@
                     const option = document.createElement('option');
                     option.value = story.id;
                     // Show first 60 chars of title or fallback to ID
-                    option.textContent = story.title
+                    const displayTitle = story.title
                         ? story.title.replace(/\n/g, ' ').slice(0, 60) + (story.title.length > 60 ? '...' : '')
                         : `Story ${story.id.slice(0, 8)}...`;
+
+                    // Add "(Completed)" suffix for finished stories
+                    option.textContent = story.is_over ? `${displayTitle} (Completed)` : displayTitle;
+
+                    // Add class for styling completed stories
+                    if (story.is_over) {
+                        option.className = 'completed-story';
+                    }
+
                     select.appendChild(option);
                 });
             } catch (error) {
@@ -639,9 +676,12 @@
 
             try {
                 const response = await apiCall('GET', `/stories/${storyId}`);
+                currentStoryCompleted = response.is_over || false;
                 currentStoryId = storyId;
                 displayStory(response);
-                document.getElementById('sendActionBtn').disabled = false;
+
+                // Enable action button only if story is not over
+                document.getElementById('sendActionBtn').disabled = response.is_over || false;
             } catch (error) {
                 console.error('Failed to load story:', error);
                 showError(error, 'Failed to load story');
@@ -652,20 +692,20 @@
 
         function displayStory(story) {
             const container = document.getElementById('storyContent');
+            const isCompleted = story.is_over || false;
 
             let html = '';
             if (story.title) {
-                html += `<div class="story-title">${story.title}</div>`;
+                html += `<div class="story-title">${story.title}${isCompleted ? ' <span class="completed-badge">(Completed)</span>' : ''}</div>`;
             }
 
             html += '<div class="chapters">';
 
-            // Sort chapters by number to ensure correct order
             const sortedChapters = [...(story.chapters || [])].sort((a, b) => a.number - b.number);
 
             sortedChapters.forEach(chapter => {
                 html += `
-                    <div class="chapter">
+                    <div class="chapter ${isCompleted ? 'completed-chapter' : ''}">
                         <div class="chapter-number">Chapter ${chapter.number}</div>
 
                         ${chapter.narration ? `
@@ -702,8 +742,9 @@
 
             container.innerHTML = html;
 
-            // Display choices and scroll after everything is rendered
-            displayCurrentChoices(story.current_choices || [], scrollToBottom);
+            // Don't show choices for completed stories
+            const choices = isCompleted ? [] : (story.current_choices || []);
+            displayCurrentChoices(choices, scrollToBottom);
         }
 
         function displayCurrentChoices(choices, callback) {
@@ -821,6 +862,7 @@
                 // Hide delete button when no story is selected
                 document.getElementById('deleteStoryBtn').style.display = 'none';
                 currentStoryId = null;
+                currentStoryCompleted = false;
                 document.getElementById('storyContent').innerHTML = `
                     <div class="empty-state">
                         Select a story from the dropdown or create a new one to begin your adventure.
@@ -854,7 +896,6 @@
                 'storySelect',
                 'newStoryBtn',
                 'deleteStoryBtn',
-                'sendActionBtn',
                 'actionInput'
             ];
 
@@ -865,10 +906,17 @@
                 }
             });
 
+            // Handle send action button separately to respect story completion
+            const sendActionBtn = document.getElementById('sendActionBtn');
+            if (sendActionBtn) {
+                const shouldDisable = loading || currentStoryCompleted;
+                sendActionBtn.disabled = shouldDisable;
+            }
+
             // Disable/enable choice items
             const choiceItems = document.querySelectorAll('.current-choice-item');
             choiceItems.forEach(item => {
-                if (loading) {
+                if (loading || currentStoryCompleted) {
                     item.classList.add('disabled');
                 } else {
                     item.classList.remove('disabled');
