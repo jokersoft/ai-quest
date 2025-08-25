@@ -2,10 +2,12 @@ import json
 import logging
 
 from app.clients import llm_client
-from app.services.prompt_provider import PromptProvider
+from app.services.translator import Translator
+from app.services.user import UserInfo
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
+
 
 class DMResponse:
     def __init__(self, narration: str, outcome: str, situation: str, choices: list[str]):
@@ -27,30 +29,37 @@ class DMResponse:
 
 
 class DungeonMaster:
-    def __init__(self):
-        self.llm_client = llm_client.create_client(PromptProvider().get("dungeon_master"), "anthropic")
-        self.story_response_tool = {
-            "name": "story_response",
-            "description": "Respond with the story outcome and next situation",
+    def __init__(self, user_info: UserInfo):
+        self.user_info = user_info
+        self.translator = Translator.get_instance(user_info.locale)
+        self.llm_client = llm_client.create_client(self.translator.translate("prompts.dungeon_master"), "anthropic")
+        self.story_response_tool = self._create_localized_tool()
+        self.tool_choice = {"type": "tool", "name": "story_response"}
+
+    def _create_localized_tool(self) -> dict:
+        """Create localized story_response_tool."""
+        return {
+            "name": self.translator.translate("dungeon_master.tool_name"),
+            "description": self.translator.translate("dungeon_master.tool_description"),
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "narration": {
                         "type": "string",
-                        "description": "A dry, sardonic comment or flavor text"
+                        "description": self.translator.translate("dungeon_master.narration_description")
                     },
                     "outcome": {
                         "type": "string",
-                        "description": "Description of what happened as a result of the player's action"
+                        "description": self.translator.translate("dungeon_master.outcome_description")
                     },
                     "situation": {
                         "type": "string",
-                        "description": "The current situation the player faces"
+                        "description": self.translator.translate("dungeon_master.situation_description")
                     },
                     "choices": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "List of choices available to the player",
+                        "description": self.translator.translate("dungeon_master.choices_description"),
                         "minItems": 3,
                         "maxItems": 6
                     }
@@ -58,7 +67,6 @@ class DungeonMaster:
                 "required": ["narration", "outcome", "situation", "choices"]
             }
         }
-        self.tool_choice = {"type": "tool", "name": "story_response"}
 
     def send_messages(self, messages: list[dict]) -> DMResponse:
         try:

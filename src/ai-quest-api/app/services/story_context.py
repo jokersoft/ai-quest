@@ -7,6 +7,8 @@ from app.repositories.chapter import ChapterRepository
 from app.repositories.story import StoryRepository
 from app.services.chapter_summarization import ChapterSummarizationService
 from app.services.memory.i_memory_store import MemoryStoreInterface
+from app.services.user import UserInfo
+from app.services.translator import Translator
 
 CONTEXT_CHAPTERS_NUM = 3
 
@@ -15,11 +17,13 @@ logger.setLevel(logging.DEBUG)
 
 
 class StoryContext:
-    def __init__(self, db: Session, memory_store: MemoryStoreInterface):
+    def __init__(self, db: Session, user_info: UserInfo, memory_store: MemoryStoreInterface):
+        self.user_info = user_info
         self.story_repository = StoryRepository(db)
         self.chapter_repository = ChapterRepository(db)
         self.memory_store = memory_store
-        self.chapter_summarization_service = ChapterSummarizationService(db)
+        self.chapter_summarization_service = ChapterSummarizationService(db, user_info)
+        self.translator = Translator.get_instance(user_info.locale)
 
     async def provide_context(self, story_id: uuid.UUID, user_decision: str) -> str:
         """Async version that can safely call memory store without blocking main thread"""
@@ -38,19 +42,19 @@ class StoryContext:
         )
 
         if not search_results:
-            return "No previous context available."
+            return self.translator.translate("story_context.no_context")
 
         logger.debug(f"memory search_results count: {len(search_results)}")
 
         # Format context for the DM
-        context_parts = ["Previous relevant events in this story:"]
+        context_parts = [self.translator.translate("story_context.previous_events")]
 
         # Sort by chapter number to maintain chronological order
         for result in sorted(search_results, key=lambda search_result: search_result.chapter_number):
             chapter = self.chapter_repository.get_chapter(story_id.bytes, result.chapter_number)
             chapter_summary = self.chapter_summarization_service.summarize_chapter(chapter)
             context_parts.append(
-                f"\n[Chapter {chapter.number}] (relevance: {result.relevance_score:.2f}): {chapter_summary}"
+                f"\n[{self.translator.translate('story_context.chapter_label')} {chapter.number}] ({self.translator.translate('story_context.relevance_label')}: {result.relevance_score:.2f}): {chapter_summary}"
             )
             logger.debug(f"chapter {chapter.number} relevance: {result.relevance_score}")
             logger.debug(f"chapter {chapter.number} summary: {chapter_summary}")

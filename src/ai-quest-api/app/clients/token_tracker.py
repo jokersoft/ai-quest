@@ -91,6 +91,7 @@ class DynamoDBTokenTracker:
         Pricing is identical for Anthropic models whether using direct API or AWS Bedrock.
         All prices are in USD per million tokens.
         AWS Bedrock Frankfurt (eu-central-1) pricing.
+        https://aws.amazon.com/bedrock/pricing/
         """
 
         # Current pricing as of January 2025 - Frankfurt region

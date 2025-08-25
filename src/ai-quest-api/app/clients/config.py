@@ -58,6 +58,6 @@ class Config:
         # configs
         self.app_version: str = os.environ.get("APP_VERSION")
         self.debug: int = int(os.environ.get("DEBUG", 0))
-        self.anthropic_model: str = os.environ.get("ANTHROPIC_MODEL", "claude-3-7-sonnet-20250219")
+        self.anthropic_model: str = os.environ.get("ANTHROPIC_MODEL", "claude-opus-4-1-20250805")
         self.anthropic_max_tokens: int = int(os.environ.get("ANTHROPIC_MAX_TOKENS", 1024))
         self.llm_client_type: str = os.environ.get("LLM_CLIENT_TYPE", "anthropic")

@@ -1,0 +1,25 @@
+{
+  "chapter_summarization": {
+    "instruction": "Bitte erstellen Sie eine prägnante Zusammenfassung dieses Buchkapitels:",
+    "narration_label": "Erzählung",
+    "situation_label": "Situation",
+    "action_label": "Handlung",
+    "outcome_label": "Ergebnis",
+    "summary_instruction": "Erstellen Sie eine kurze Zusammenfassung, die die wichtigsten Ereignisse und Entwicklungen in diesem Kapitel erfasst."
+  },
+  "story_context": {
+    "no_context": "Kein vorheriger Kontext verfügbar.",
+    "previous_events": "Vorherige relevante Ereignisse in dieser Geschichte:",
+    "chapter_label": "Kapitel",
+    "relevance_label": "Relevanz"
+  },
+  "dungeon_master": {
+    "tool_name": "story_response",
+    "tool_description": "Antworten Sie mit dem Geschichtsergebnis und der nächsten Situation",
+    "narration_description": "Ein trockener, sardonischer Kommentar oder Beschreibungstext",
+    "outcome_description": "Beschreibung dessen, was als Ergebnis der Spieleraktion geschah",
+    "situation_description": "Die aktuelle Situation, der sich der Spieler gegenübersieht",
+    "choices_description": "Liste der für den Spieler verfügbaren Auswahlmöglichkeiten"
+  }
+}
+

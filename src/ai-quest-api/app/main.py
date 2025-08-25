@@ -10,7 +10,7 @@ from app.clients import llm_client, db_client
 from app.services import security
 from app.services import user
 from app.services.memory.aws_memory_store import AWSS3MemoryStore, S3VectorConfig
-from app.services.prompt_provider import PromptProvider
+from app.services.translator import Translator
 from app.services.story import StoryService
 from app.schemas.story import Story, FullStory
 from app.schemas.user_decision import UserDecision
@@ -20,7 +20,7 @@ API_GATEWAY_BASE_PATH = "/quest"
 app = fastapi.FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Configure this to your specific domains in production
+    allow_origins=["*"],  # TODO: configure
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,9 +28,6 @@ app.add_middleware(
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-
-# Configure LLM client
-llm_client = llm_client.create_client(PromptProvider().get("default"), "anthropic")
 
 # Configure memory client
 memory_store_config = S3VectorConfig(
@@ -45,8 +42,12 @@ def health_check():
 
 
 @app.post("/ask", dependencies=[fastapi.Depends(security.verify_api_key)])
-def ask(question: str):
-    response = llm_client.ask(question)
+def ask(question: str, user_info: user.UserInfo = fastapi.Depends(user.get_user_info)):
+    # Configure LLM client
+    translator = Translator.get_instance(user_info.locale)
+    system_prompt = translator.translate("prompts.default")
+    client = llm_client.create_client(system_prompt, "anthropic")
+    response = client.ask(question)
     return {"response": response}
 
 
@@ -56,7 +57,7 @@ def stories(
     db: Session = fastapi.Depends(db_client.get_db)
 ) -> list[Story]:
     logger.debug(f"User {user_info.email} requesting stories.")
-    stories = StoryService(db).list(user_info)
+    stories = StoryService(db, user_info).list(user_info)
     return stories
 
 
@@ -65,30 +66,43 @@ async def init(
     user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
     db: Session = fastapi.Depends(db_client.get_db)
 ) -> FullStory:
-    story_service = StoryService(db, memory_store)
+    story_service = StoryService(db, user_info, memory_store)
     new_story = await story_service.init(user_info)
     logger.debug(f"New Story {new_story.id} created")
     return new_story
 
 
 @app.get("/stories/{story_id}", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
-def get(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
+def get(
+    story_id: uuid.UUID,
+    db: Session = fastapi.Depends(db_client.get_db),
+    user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
+) -> FullStory:
     logger.debug(f"Retrieving Story {story_id}")
-    story_service = StoryService(db)
+    story_service = StoryService(db, user_info)
     return story_service.get(story_id)
 
 
 @app.post("/stories/{story_id}/act", response_model=FullStory, dependencies=[fastapi.Depends(security.verify_api_key)])
-async def act(story_id: uuid.UUID, user_decision: UserDecision, db: Session = fastapi.Depends(db_client.get_db)) -> FullStory:
+async def act(
+    story_id: uuid.UUID,
+    user_decision: UserDecision,
+    db: Session = fastapi.Depends(db_client.get_db),
+    user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
+) -> FullStory:
     logger.debug(f"Acting inside Story {story_id}")
-    story_service = StoryService(db, memory_store)
+    story_service = StoryService(db, user_info, memory_store)
     return await story_service.act(story_id, user_decision.message)
 
 
 @app.delete("/stories/{story_id}", dependencies=[fastapi.Depends(security.verify_api_key)])
-async def delete(story_id: uuid.UUID, db: Session = fastapi.Depends(db_client.get_db)):
+async def delete(
+    story_id: uuid.UUID,
+    db: Session = fastapi.Depends(db_client.get_db),
+    user_info: user.UserInfo = fastapi.Depends(user.get_user_info),
+):
     logger.debug(f"Deleting Story {story_id}")
-    story_service = StoryService(db, memory_store)
+    story_service = StoryService(db, user_info, memory_store)
     await story_service.delete(story_id)
     return fastapi.responses.Response(status_code=204)
 

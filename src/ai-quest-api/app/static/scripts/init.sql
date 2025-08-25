@@ -5,6 +5,7 @@ USE ai_quest;
 CREATE TABLE users (
     id BINARY(16) PRIMARY KEY,
     email VARCHAR(254) NOT NULL,
+    locale VARCHAR(2) NOT NULL DEFAULT 'en',
     is_active BOOLEAN NOT NULL DEFAULT FALSE
 );
 CREATE INDEX idx_email ON users(email);

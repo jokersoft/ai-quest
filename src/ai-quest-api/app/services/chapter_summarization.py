@@ -5,15 +5,30 @@ from sqlalchemy.orm import Session
 from app.clients import llm_client
 from app.entities.chapter import Chapter
 from app.repositories.chapter import ChapterRepository
-from app.services.prompt_provider import PromptProvider
+from app.services.translator import Translator
+from app.services.user import UserInfo
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+
 class ChapterSummarizationService:
-    def __init__(self, db: Session):
-        self.llm_client = llm_client.create_client(PromptProvider().get("dm_summarize"), "anthropic")
+    def __init__(self, db: Session, user_info: UserInfo):
+        self.translator = Translator.get_instance(user_info.locale)
+        self.llm_client = llm_client.create_client(self.translator.translate("prompts.dm_summarize"), "anthropic")
         self.chapter_repository = ChapterRepository(db)
+        self.user_info = user_info
+
+    def _get_localized_prompt(self, chapter: Chapter) -> str:
+        """Generate localized prompt based on user language."""
+        return f"""{self.translator.translate('chapter_summarization.instruction')}
+
+{self.translator.translate('chapter_summarization.narration_label')}: {chapter.narration}
+{self.translator.translate('chapter_summarization.situation_label')}: {chapter.situation}
+{self.translator.translate('chapter_summarization.action_label')}: {chapter.action}
+{self.translator.translate('chapter_summarization.outcome_label')}: {chapter.outcome}
+
+{self.translator.translate('chapter_summarization.summary_instruction')}"""
 
     def summarize_chapter(self, chapter: Chapter) -> str:
         """Summarize a chapter using the LLM client."""
@@ -23,15 +38,8 @@ class ChapterSummarizationService:
             return chapter.summary
 
         try:
-            # Create a prompt with the chapter content
-            prompt = f"""Please provide a concise summary of this chapter of the book:
-
-Narration: {chapter.narration}
-Situation: {chapter.situation}
-Action: {chapter.action}
-Outcome: {chapter.outcome}
-
-Create a brief summary that captures the key events and developments in this chapter."""
+            # Create a localized prompt with the chapter content
+            prompt = self._get_localized_prompt(chapter)
 
             # Use the LLM client to generate the summary
             response = self.llm_client.ask(prompt)

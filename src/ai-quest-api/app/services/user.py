@@ -17,11 +17,12 @@ APP_ENV = os.getenv("APP_ENV", "prod")
 
 class UserInfo:
     """Class to hold user information from the authorizer"""
-    def __init__(self, user_id: uuid.UUID, email: str, name: str = None, picture: str = None):
+    def __init__(self, user_id: uuid.UUID, email: str, name: str = None, picture: str = None, locale: str = None):
         self.user_id = user_id
         self.email = email
         self.name = name
         self.picture = picture
+        self.locale = locale or "en"
 
 
 def get_user_info(request: Request) -> UserInfo:
@@ -62,7 +63,7 @@ def get_user_info(request: Request) -> UserInfo:
             picture = authorizer_context.get('picture', None)
 
             logger.info(f"User authenticated: {email}")
-            return UserInfo(email=email, name=name, picture=picture, user_id=user.get_id())
+            return UserInfo(email=email, name=name, picture=picture, user_id=user.get_id(), locale="en")
         else:
             logger.error("No AWS event context found")
             raise HTTPException(status_code=401, detail="Authentication context not found")
