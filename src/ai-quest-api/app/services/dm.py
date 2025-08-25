@@ -1,11 +1,14 @@
 import json
 import logging
+import os
 
 from app.clients import llm_client
 from app.services.prompt_provider import PromptProvider
+from app.services.user import UserInfo
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
+
 
 class DMResponse:
     def __init__(self, narration: str, outcome: str, situation: str, choices: list[str]):
@@ -27,30 +30,55 @@ class DMResponse:
 
 
 class DungeonMaster:
-    def __init__(self):
-        self.llm_client = llm_client.create_client(PromptProvider().get("dungeon_master"), "anthropic")
-        self.story_response_tool = {
-            "name": "story_response",
-            "description": "Respond with the story outcome and next situation",
+    def __init__(self, user_info: UserInfo):
+        self.user_info = user_info
+        self.llm_client = llm_client.create_client(PromptProvider(user_info.locale).get("dungeon_master"), "anthropic")
+        self._load_translations()
+        self.story_response_tool = self._create_localized_tool()
+        self.tool_choice = {"type": "tool", "name": "story_response"}
+
+    def _load_translations(self):
+        """Load translations from JSON file."""
+        translations_path = os.path.join(
+            os.path.dirname(__file__),
+            '..',
+            'translations',
+            'dungeon_master.json'
+        )
+        with open(translations_path, 'r', encoding='utf-8') as f:
+            self.translations = json.load(f)
+
+    def _get_localized_text(self, key: str) -> str:
+        """Get localized text based on user language."""
+        language = getattr(self.user_info, 'language', 'en')
+        if language not in self.translations:
+            language = 'en'
+        return self.translations[language].get(key, self.translations['en'][key])
+
+    def _create_localized_tool(self) -> dict:
+        """Create localized story_response_tool."""
+        return {
+            "name": self._get_localized_text("tool_name"),
+            "description": self._get_localized_text("tool_description"),
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "narration": {
                         "type": "string",
-                        "description": "A dry, sardonic comment or flavor text"
+                        "description": self._get_localized_text("narration_description")
                     },
                     "outcome": {
                         "type": "string",
-                        "description": "Description of what happened as a result of the player's action"
+                        "description": self._get_localized_text("outcome_description")
                     },
                     "situation": {
                         "type": "string",
-                        "description": "The current situation the player faces"
+                        "description": self._get_localized_text("situation_description")
                     },
                     "choices": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "List of choices available to the player",
+                        "description": self._get_localized_text("choices_description"),
                         "minItems": 3,
                         "maxItems": 6
                     }
@@ -58,7 +86,6 @@ class DungeonMaster:
                 "required": ["narration", "outcome", "situation", "choices"]
             }
         }
-        self.tool_choice = {"type": "tool", "name": "story_response"}
 
     def send_messages(self, messages: list[dict]) -> DMResponse:
         try:

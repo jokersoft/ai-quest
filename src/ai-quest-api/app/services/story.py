@@ -13,6 +13,7 @@ from app.repositories.story import StoryRepository
 from app.repositories.message import MessageRepository
 from app.services import dm
 from app.services.memory.i_memory_store import MemoryStoreInterface
+from app.services.prompt_provider import PromptProvider
 from app.services.story_context import StoryContext
 from app.services.user import UserInfo
 from app.schemas.story import Story as StoryResponse, FullStory as FullStoryResponse
@@ -20,17 +21,17 @@ from app.schemas.story import Story as StoryResponse, FullStory as FullStoryResp
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-INITIAL_USER_MESSAGE = "Wake up!"  # Initial message to start the story
 
 class StoryService:
-    def __init__(self, db: Session, memory_service: Optional[MemoryStoreInterface] = None):
+    def __init__(self, db: Session, user_info: UserInfo, memory_service: Optional[MemoryStoreInterface] = None):
         self.db = db
-        self.dm = dm.DungeonMaster()
+        self.user_info = user_info
+        self.dm = dm.DungeonMaster(user_info)
         self.story_repository = StoryRepository(db)
         self.message_repository = MessageRepository(db)
         self.chapter_repository = ChapterRepository(db)
         self.memory_service = memory_service
-        self.story_context_service = StoryContext(db, memory_service)
+        self.story_context_service = StoryContext(db, user_info, memory_service)
 
     def get(self, story_id: uuid.UUID) -> FullStoryResponse:
         # Get story by ID
@@ -65,7 +66,9 @@ class StoryService:
         logger.info(f"Story created with ID: {story_id_uuid}")
 
         # Get intro message from the LLM
-        messages = [{"role": "user", "content": INITIAL_USER_MESSAGE}]
+        initial_user_message = PromptProvider(self.user_info.locale).get('1st_user_message')
+
+        messages = [{"role": "user", "content": initial_user_message}]
         dm_intro_message = self.dm.send_messages(messages)
 
         # Record the 1st chapter
@@ -73,7 +76,7 @@ class StoryService:
             narration=dm_intro_message.narration,
             situation=dm_intro_message.situation,
             choices=dm_intro_message.choices,
-            action=INITIAL_USER_MESSAGE,
+            action=initial_user_message,
             outcome=dm_intro_message.outcome,
             number=1,
             story_id=saved_story.id
