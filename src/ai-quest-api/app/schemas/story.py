@@ -30,6 +30,7 @@ class Story(BaseModel):
     id: Union[str, bytes, uuid.UUID] = Field(alias='id')
     user_id: Union[str, bytes, uuid.UUID] = Field(alias='user_id')
     title: str | None = None
+    is_over: bool = False
 
     @field_validator('id', 'user_id', mode='before')
     def convert_id(cls, v: Union[bytes, uuid.UUID, str]) -> str:

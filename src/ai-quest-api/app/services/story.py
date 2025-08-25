@@ -133,7 +133,8 @@ class StoryService:
             StoryResponse(
                 id=story.id,
                 user_id=story.user_id,
-                title=story.title
+                title=story.title,
+                is_over=story.is_over,
             )
             for story in story_entities
         ]
@@ -144,6 +145,9 @@ class StoryService:
         story_entity = self.story_repository.get(story_id.bytes)
         if not story_entity:
             raise ValueError(f"Story with ID {story_id} not found")
+
+        if story_entity.is_over:
+            raise ValueError(f"Story with ID {story_id} is already over")
 
         # Get existing messages
         message_entities = self.message_repository.get_messages_by_story_id(story_id.bytes)
@@ -180,6 +184,10 @@ class StoryService:
 
         # Get response from LLM
         assistant_response = self.dm.send_messages(llm_messages)
+
+        # If Death
+        if assistant_response.is_death:
+            self.story_repository.end_story(story_id.bytes)
 
         # Record the new chapter
         new_chapter_number = self.chapter_repository.get_max_chapter_number(story_id.bytes) + 1
@@ -231,6 +239,7 @@ class StoryService:
             title=story_entity.title,
             chapters=chapter_entities,
             current_choices=assistant_response.choices,
+            is_over=assistant_response.is_death,
         )
 
         return full_story

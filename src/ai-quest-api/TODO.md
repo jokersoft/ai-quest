@@ -1,12 +1,12 @@
 TODO
 ====
 
+- end_story(death)
+  - is_story_over: bool
 - tune context
   - messages
   - summarization
   - dialogue continuity
-- end_story(death)
-  - is_story_over: bool
 - basic actual test
 
 Story data model:

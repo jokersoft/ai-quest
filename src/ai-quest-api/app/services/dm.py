@@ -10,18 +10,20 @@ logger.setLevel(logging.DEBUG)
 
 
 class DMResponse:
-    def __init__(self, narration: str, outcome: str, situation: str, choices: list[str]):
+    def __init__(self, narration: str, outcome: str, situation: str, choices: list[str], is_death: bool = False):
         self.narration = narration
         self.outcome = outcome
         self.situation = situation
         self.choices = choices
+        self.is_death = is_death
 
     def to_dict(self):
         return {
             "narration": self.narration,
             "outcome": self.outcome,
             "situation": self.situation,
-            "choices": self.choices
+            "choices": self.choices,
+            "is_death": self.is_death,
         }
 
     def to_string(self):
@@ -62,6 +64,10 @@ class DungeonMaster:
                         "description": self.translator.translate("dungeon_master.choices_description"),
                         "minItems": 3,
                         "maxItems": 6
+                    },
+                    "is_death": {
+                        "type": "boolean",
+                        "description": "True if the player dies in this outcome"
                     }
                 },
                 "required": ["narration", "outcome", "situation", "choices"]
