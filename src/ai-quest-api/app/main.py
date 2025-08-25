@@ -10,7 +10,7 @@ from app.clients import llm_client, db_client
 from app.services import security
 from app.services import user
 from app.services.memory.aws_memory_store import AWSS3MemoryStore, S3VectorConfig
-from app.services.prompt_provider import PromptProvider
+from app.services.translator import Translator
 from app.services.story import StoryService
 from app.schemas.story import Story, FullStory
 from app.schemas.user_decision import UserDecision
@@ -44,7 +44,8 @@ def health_check():
 @app.post("/ask", dependencies=[fastapi.Depends(security.verify_api_key)])
 def ask(question: str, user_info: user.UserInfo = fastapi.Depends(user.get_user_info)):
     # Configure LLM client
-    system_prompt = PromptProvider(user_info.locale).get("default")
+    translator = Translator.get_instance(user_info.locale)
+    system_prompt = translator.translate("prompts.default")
     client = llm_client.create_client(system_prompt, "anthropic")
     response = client.ask(question)
     return {"response": response}

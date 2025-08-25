@@ -1,0 +1,25 @@
+{
+  "chapter_summarization": {
+    "instruction": "Будь ласка, надайте стислий виклад цієї глави книги:",
+    "narration_label": "Оповідання",
+    "situation_label": "Ситуація",
+    "action_label": "Дія",
+    "outcome_label": "Результат",
+    "summary_instruction": "Створіть короткий виклад, який відображає ключові події та розвиток подій у цій главі."
+  },
+  "story_context": {
+    "no_context": "Попередній контекст недоступний.",
+    "previous_events": "Попередні відповідні події в цій історії:",
+    "chapter_label": "Глава",
+    "relevance_label": "релевантність"
+  },
+  "dungeon_master": {
+    "tool_name": "story_response",
+    "tool_description": "Відповідь з результатом історії та наступною ситуацією",
+    "narration_description": "Сухий, саркастичний коментар або описовий текст",
+    "outcome_description": "Опис того, що сталося в результаті дії гравця",
+    "situation_description": "Поточна ситуація, з якою стикається гравець",
+    "choices_description": "Список варіантів, доступних гравцеві"
+  }
+}
+

@@ -1,13 +1,11 @@
-import json
 import logging
-import os
 
 from sqlalchemy.orm import Session
 
 from app.clients import llm_client
 from app.entities.chapter import Chapter
 from app.repositories.chapter import ChapterRepository
-from app.services.prompt_provider import PromptProvider
+from app.services.translator import Translator
 from app.services.user import UserInfo
 
 logger = logging.getLogger()
@@ -16,38 +14,21 @@ logger.setLevel(logging.DEBUG)
 
 class ChapterSummarizationService:
     def __init__(self, db: Session, user_info: UserInfo):
-        self.llm_client = llm_client.create_client(PromptProvider().get("dm_summarize"), "anthropic")
+        self.translator = Translator.get_instance(user_info.locale)
+        self.llm_client = llm_client.create_client(self.translator.translate("prompts.dm_summarize"), "anthropic")
         self.chapter_repository = ChapterRepository(db)
         self.user_info = user_info
-        self._load_translations()
-
-    def _load_translations(self):
-        """Load translations from JSON file."""
-        translations_path = os.path.join(
-            os.path.dirname(__file__),
-            '..',
-            'translations',
-            'chapter_summarization.json'
-        )
-        with open(translations_path, 'r', encoding='utf-8') as f:
-            self.translations = json.load(f)
 
     def _get_localized_prompt(self, chapter: Chapter) -> str:
         """Generate localized prompt based on user language."""
-        language = getattr(self.user_info, 'language', 'en')
-        if language not in self.translations:
-            language = 'en'
+        return f"""{self.translator.translate('chapter_summarization.instruction')}
 
-        t = self.translations[language]
+{self.translator.translate('chapter_summarization.narration_label')}: {chapter.narration}
+{self.translator.translate('chapter_summarization.situation_label')}: {chapter.situation}
+{self.translator.translate('chapter_summarization.action_label')}: {chapter.action}
+{self.translator.translate('chapter_summarization.outcome_label')}: {chapter.outcome}
 
-        return f"""{t['instruction']}
-
-{t['narration_label']}: {chapter.narration}
-{t['situation_label']}: {chapter.situation}
-{t['action_label']}: {chapter.action}
-{t['outcome_label']}: {chapter.outcome}
-
-{t['summary_instruction']}"""
+{self.translator.translate('chapter_summarization.summary_instruction')}"""
 
     def summarize_chapter(self, chapter: Chapter) -> str:
         """Summarize a chapter using the LLM client."""

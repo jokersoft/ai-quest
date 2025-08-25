@@ -1,9 +1,8 @@
 import json
 import logging
-import os
 
 from app.clients import llm_client
-from app.services.prompt_provider import PromptProvider
+from app.services.translator import Translator
 from app.services.user import UserInfo
 
 logger = logging.getLogger()
@@ -32,53 +31,35 @@ class DMResponse:
 class DungeonMaster:
     def __init__(self, user_info: UserInfo):
         self.user_info = user_info
-        self.llm_client = llm_client.create_client(PromptProvider(user_info.locale).get("dungeon_master"), "anthropic")
-        self._load_translations()
+        self.translator = Translator.get_instance(user_info.locale)
+        self.llm_client = llm_client.create_client(self.translator.translate("prompts.dungeon_master"), "anthropic")
         self.story_response_tool = self._create_localized_tool()
         self.tool_choice = {"type": "tool", "name": "story_response"}
-
-    def _load_translations(self):
-        """Load translations from JSON file."""
-        translations_path = os.path.join(
-            os.path.dirname(__file__),
-            '..',
-            'translations',
-            'dungeon_master.json'
-        )
-        with open(translations_path, 'r', encoding='utf-8') as f:
-            self.translations = json.load(f)
-
-    def _get_localized_text(self, key: str) -> str:
-        """Get localized text based on user language."""
-        language = getattr(self.user_info, 'language', 'en')
-        if language not in self.translations:
-            language = 'en'
-        return self.translations[language].get(key, self.translations['en'][key])
 
     def _create_localized_tool(self) -> dict:
         """Create localized story_response_tool."""
         return {
-            "name": self._get_localized_text("tool_name"),
-            "description": self._get_localized_text("tool_description"),
+            "name": self.translator.translate("dungeon_master.tool_name"),
+            "description": self.translator.translate("dungeon_master.tool_description"),
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "narration": {
                         "type": "string",
-                        "description": self._get_localized_text("narration_description")
+                        "description": self.translator.translate("dungeon_master.narration_description")
                     },
                     "outcome": {
                         "type": "string",
-                        "description": self._get_localized_text("outcome_description")
+                        "description": self.translator.translate("dungeon_master.outcome_description")
                     },
                     "situation": {
                         "type": "string",
-                        "description": self._get_localized_text("situation_description")
+                        "description": self.translator.translate("dungeon_master.situation_description")
                     },
                     "choices": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": self._get_localized_text("choices_description"),
+                        "description": self.translator.translate("dungeon_master.choices_description"),
                         "minItems": 3,
                         "maxItems": 6
                     }

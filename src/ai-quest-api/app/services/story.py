@@ -13,7 +13,7 @@ from app.repositories.story import StoryRepository
 from app.repositories.message import MessageRepository
 from app.services import dm
 from app.services.memory.i_memory_store import MemoryStoreInterface
-from app.services.prompt_provider import PromptProvider
+from app.services.translator import Translator
 from app.services.story_context import StoryContext
 from app.services.user import UserInfo
 from app.schemas.story import Story as StoryResponse, FullStory as FullStoryResponse
@@ -32,6 +32,7 @@ class StoryService:
         self.chapter_repository = ChapterRepository(db)
         self.memory_service = memory_service
         self.story_context_service = StoryContext(db, user_info, memory_service)
+        self.translator = Translator.get_instance(user_info.locale)
 
     def get(self, story_id: uuid.UUID) -> FullStoryResponse:
         # Get story by ID
@@ -66,7 +67,7 @@ class StoryService:
         logger.info(f"Story created with ID: {story_id_uuid}")
 
         # Get intro message from the LLM
-        initial_user_message = PromptProvider(self.user_info.locale).get('1st_user_message')
+        initial_user_message = self.translator.translate('prompts.1st_user_message')
 
         messages = [{"role": "user", "content": initial_user_message}]
         dm_intro_message = self.dm.send_messages(messages)
