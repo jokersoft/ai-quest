@@ -8,7 +8,8 @@ TODO
 - end_story(death)
   - is_story_over: bool
 - basic actual test
-
+- i18n
+  - better unified solution with simple translator interface (instead of prompts+translations as of now)
 
 Story data model:
 - short summary (mutable)
